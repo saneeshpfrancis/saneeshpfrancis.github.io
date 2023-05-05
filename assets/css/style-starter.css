@@ -19349,7 +19349,7 @@ p.ab-content {
   font-size: 22px;
   line-height: 32px;
   font-weight: 600;
-  text-transform: capitalize;
+  /*text-transform: capitalize; */
 }
 
 .w3l-bottom-grids-6 .area-box {
