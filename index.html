@@ -13,6 +13,14 @@
       rel="stylesheet" />
     <!-- Template CSS Style link -->
     <link rel="stylesheet" href="assets/css/style-starter.css" />
+    <script>
+      var birthDate = new Date(1989, 7, 5, 0, 0, 0, 0);
+      var currentDate = new Date();
+      var age = currentDate.getFullYear() - birthDate.getFullYear();
+      window.onload = function() {
+        document.getElementById("MyAge").innerHTML=age+" Years";
+      }
+    </script>
   </head>
 
   <body>
@@ -226,7 +234,7 @@
                 <li class="name-style">Age</li>
                 <li>:</li>
                 <li>
-                  <p>34 Years</p>
+                  <p id="MyAge">34 Years</p>
                 </li>
               </ul>
               <ul class="single-info">
