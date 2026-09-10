@@ -1,0 +1,841 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D Prism Spectrometer Simulator</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #1a1a2e; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+  #canvas3d { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+
+  #controls {
+    position: absolute; top: 10px; right: 10px; width: 320px;
+    background: rgba(15,15,35,0.92); border: 1px solid #334; border-radius: 12px;
+    padding: 16px; max-height: calc(100vh - 20px); overflow-y: auto;
+    backdrop-filter: blur(10px); z-index: 10;
+  }
+  #controls h2 { font-size: 16px; color: #7ecfff; margin-bottom: 12px; text-align: center; border-bottom: 1px solid #334; padding-bottom: 8px; }
+  .ctrl-group { margin-bottom: 14px; }
+  .ctrl-group label { display: block; font-size: 12px; color: #aab; margin-bottom: 4px; }
+  .ctrl-group .val { float: right; color: #7ecfff; font-weight: bold; font-size: 12px; }
+  input[type=range] { width: 100%; accent-color: #7ecfff; cursor: pointer; }
+  .fine-label { font-size: 10px; color: #889; margin-top: 2px; }
+
+  .btn {
+    display: inline-block; padding: 8px 16px; border: 1px solid #556; border-radius: 6px;
+    background: #2a2a4a; color: #cde; cursor: pointer; font-size: 12px; transition: all 0.2s;
+    margin: 2px;
+  }
+  .btn:hover { background: #3a3a6a; border-color: #7ecfff; }
+  .btn.active { background: #1a5a3a; border-color: #4f8; color: #4f8; }
+
+  #telescope-view {
+    position: absolute; bottom: 15px; left: 15px; width: 220px; height: 220px;
+    background: #000; border: 3px solid #445; border-radius: 50%;
+    overflow: hidden; z-index: 10; box-shadow: 0 0 20px rgba(0,0,0,0.8);
+  }
+  #telescope-view canvas { width: 100%; height: 100%; }
+  #tv-label {
+    position: absolute; bottom: 240px; left: 15px; width: 220px; text-align: center;
+    font-size: 11px; color: #7ecfff; z-index: 10;
+  }
+  #crosshair {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    width: 2px; height: 100%; background: rgba(255,255,255,0.15); z-index: 2; pointer-events: none;
+  }
+  #crosshair-h {
+    position: absolute; top: 50%; left: 0; width: 100%; height: 1px;
+    background: rgba(255,255,255,0.15); z-index: 2; pointer-events: none;
+  }
+
+  #info-panel {
+    position: absolute; top: 10px; left: 10px; background: rgba(15,15,35,0.92);
+    border: 1px solid #334; border-radius: 12px; padding: 14px; z-index: 10;
+    backdrop-filter: blur(10px); min-width: 240px;
+  }
+  #info-panel h3 { font-size: 14px; color: #7ecfff; margin-bottom: 8px; }
+  #info-panel .row { font-size: 11px; margin: 3px 0; color: #bbc; }
+  #info-panel .row span { color: #7ecfff; font-weight: bold; }
+
+  #instructions {
+    position: absolute; bottom: 15px; right: 10px; background: rgba(15,15,35,0.85);
+    border: 1px solid #334; border-radius: 8px; padding: 10px 14px; z-index: 10;
+    font-size: 10px; color: #889; max-width: 320px; line-height: 1.5;
+  }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #445; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<canvas id="canvas3d"></canvas>
+
+<div id="info-panel">
+  <h3>📊 Measurements</h3>
+  <div class="row">Telescope Angle: <span id="info-tel">0.00°</span></div>
+  <div class="row">Vernier Table Angle: <span id="info-ver">0.00°</span></div>
+  <div class="row">Angle of Incidence: <span id="info-aoi">0.00°</span></div>
+  <div class="row">Deviation (yellow): <span id="info-dev">0.00°</span></div>
+  <div class="row">Min Deviation Dₘ: <span id="info-dm">—</span></div>
+  <div class="row">Refractive Index: <span id="info-n">1.500</span></div>
+  <div class="row">Prism on Table: <span id="info-prism">No</span></div>
+  <div class="row">Observed λ: <span id="info-lambda">—</span></div>
+</div>
+
+<div id="tv-label">🔭 Telescope View</div>
+<div id="telescope-view">
+  <canvas id="tv-canvas" width="220" height="220"></canvas>
+  <div id="crosshair"></div>
+  <div id="crosshair-h"></div>
+</div>
+
+<div id="controls">
+  <h2>⚙️ Spectrometer Controls</h2>
+
+  <div class="ctrl-group">
+    <label>Refractive Index (n) <span class="val" id="v-n">1.500</span></label>
+    <input type="range" id="sl-n" min="1.30" max="1.80" step="0.001" value="1.500">
+  </div>
+
+  <div class="ctrl-group">
+    <label>Telescope Rotation (coarse) <span class="val" id="v-tel">180.0°</span></label>
+    <input type="range" id="sl-tel" min="100" max="260" step="0.1" value="180">
+    <label class="fine-label">Telescope Fine Adjust <span class="val" id="v-tel-f">0.00°</span></label>
+    <input type="range" id="sl-tel-f" min="-0.5" max="0.5" step="0.01" value="0">
+  </div>
+
+  <div class="ctrl-group">
+    <label>Vernier Table Rotation (coarse) <span class="val" id="v-ver">0.0°</span></label>
+    <input type="range" id="sl-ver" min="-60" max="60" step="0.1" value="0">
+    <label class="fine-label">Vernier Fine Adjust <span class="val" id="v-ver-f">0.00°</span></label>
+    <input type="range" id="sl-ver-f" min="-0.5" max="0.5" step="0.01" value="0">
+  </div>
+
+  <div class="ctrl-group" style="text-align:center; margin-top:16px;">
+    <button class="btn" id="btn-prism">🔺 Place Prism</button>
+    <button class="btn" id="btn-reset">↺ Reset</button>
+  </div>
+  <div class="ctrl-group" style="text-align:center;">
+    <button class="btn" id="btn-mindev">🎯 Find Min Deviation</button>
+  </div>
+</div>
+
+<div id="instructions">
+  <strong>How to use:</strong><br>
+  • Drag to orbit the 3D view, scroll to zoom<br>
+  • Place the prism, then adjust vernier & telescope<br>
+  • Use fine sliders for precise alignment<br>
+  • Watch the telescope view for spectral lines<br>
+  • "Find Min Deviation" auto-aligns for yellow light
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+// ============ SCENE SETUP ============
+const canvas = document.getElementById('canvas3d');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.2;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0a0a1a);
+scene.fog = new THREE.Fog(0x0a0a1a, 15, 30);
+
+const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(5, 5, 5);
+
+const controls = new THREE.OrbitControls(camera, canvas);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.target.set(0, 0.5, 0);
+controls.minDistance = 2;
+controls.maxDistance = 15;
+
+// Lights
+const ambLight = new THREE.AmbientLight(0x334466, 0.6);
+scene.add(ambLight);
+const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+dirLight.position.set(5, 8, 5);
+dirLight.castShadow = true;
+scene.add(dirLight);
+const ptLight = new THREE.PointLight(0x7ecfff, 0.4, 15);
+ptLight.position.set(-3, 4, -3);
+scene.add(ptLight);
+
+// Ground
+const groundGeo = new THREE.PlaneGeometry(30, 30);
+const groundMat = new THREE.MeshStandardMaterial({ color: 0x111122, roughness: 0.9 });
+const ground = new THREE.Mesh(groundGeo, groundMat);
+ground.rotation.x = -Math.PI / 2;
+ground.position.y = -0.01;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// ============ MATERIALS ============
+const metalMat = new THREE.MeshStandardMaterial({ color: 0x888899, metalness: 0.8, roughness: 0.3 });
+const darkMetalMat = new THREE.MeshStandardMaterial({ color: 0x333344, metalness: 0.7, roughness: 0.4 });
+const brassMat = new THREE.MeshStandardMaterial({ color: 0xb8963e, metalness: 0.8, roughness: 0.3 });
+const blackMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.8 });
+const glassMat = new THREE.MeshPhysicalMaterial({
+  color: 0xaaddff, transparent: true, opacity: 0.35, roughness: 0.05,
+  metalness: 0.0, transmission: 0.8, thickness: 0.5, ior: 1.5
+});
+
+// ============ BUILD SPECTROMETER ============
+const spectrometer = new THREE.Group();
+scene.add(spectrometer);
+
+// Base plate
+const baseGeo = new THREE.CylinderGeometry(2.2, 2.4, 0.15, 64);
+const base = new THREE.Mesh(baseGeo, darkMetalMat);
+base.position.y = 0.075;
+base.castShadow = true;
+base.receiveShadow = true;
+spectrometer.add(base);
+
+// Graduated circle
+const circleGeo = new THREE.TorusGeometry(2.0, 0.06, 8, 128);
+const circle = new THREE.Mesh(circleGeo, brassMat);
+circle.rotation.x = Math.PI / 2;
+circle.position.y = 0.16;
+spectrometer.add(circle);
+
+// Degree markings
+for (let i = 0; i < 360; i += 5) {
+  const rad = (i * Math.PI) / 180;
+  const len = i % 30 === 0 ? 0.18 : i % 10 === 0 ? 0.12 : 0.06;
+  const markGeo = new THREE.BoxGeometry(0.01, 0.005, len);
+  const mark = new THREE.Mesh(markGeo, brassMat);
+  const r = 2.0;
+  mark.position.set(Math.cos(rad) * r, 0.16, Math.sin(rad) * r);
+  mark.rotation.y = -rad;
+  spectrometer.add(mark);
+}
+
+// Central pillar
+const pillarGeo = new THREE.CylinderGeometry(0.15, 0.18, 0.6, 32);
+const pillar = new THREE.Mesh(pillarGeo, metalMat);
+pillar.position.y = 0.45;
+pillar.castShadow = true;
+spectrometer.add(pillar);
+
+// Prism table
+const tablePivot = new THREE.Group();
+tablePivot.position.y = 0.75;
+spectrometer.add(tablePivot);
+
+const tableGeo = new THREE.CylinderGeometry(0.6, 0.6, 0.06, 64);
+const table = new THREE.Mesh(tableGeo, metalMat);
+table.castShadow = true;
+tablePivot.add(table);
+
+// Table leveling screws (decorative)
+for (let i = 0; i < 3; i++) {
+  const a = (i * 2 * Math.PI) / 3;
+  const screwGeo = new THREE.CylinderGeometry(0.03, 0.03, 0.08, 12);
+  const screw = new THREE.Mesh(screwGeo, brassMat);
+  screw.position.set(Math.cos(a) * 0.45, -0.04, Math.sin(a) * 0.45);
+  tablePivot.add(screw);
+}
+
+// Prism
+const prismGroup = new THREE.Group();
+prismGroup.visible = false;
+tablePivot.add(prismGroup);
+
+const prismSize = 0.35;
+const prismShape = new THREE.Shape();
+const h = prismSize * Math.sqrt(3) / 2;
+prismShape.moveTo(0, h * 0.667);
+prismShape.lineTo(-prismSize / 2, -h * 0.333);
+prismShape.lineTo(prismSize / 2, -h * 0.333);
+prismShape.closePath();
+
+const extrudeSettings = { depth: 0.4, bevelEnabled: false };
+const prismGeo = new THREE.ExtrudeGeometry(prismShape, extrudeSettings);
+prismGeo.center();
+const prismMesh = new THREE.Mesh(prismGeo, glassMat);
+prismMesh.rotation.x = Math.PI / 2;
+prismMesh.position.y = 0.15;
+prismMesh.castShadow = true;
+prismGroup.add(prismMesh);
+
+// Prism edges (wireframe)
+const prismEdgeGeo = new THREE.EdgesGeometry(prismGeo);
+const prismEdgeMat = new THREE.LineBasicMaterial({ color: 0x88ccff, transparent: true, opacity: 0.5 });
+const prismEdge = new THREE.LineSegments(prismEdgeGeo, prismEdgeMat);
+prismEdge.rotation.x = Math.PI / 2;
+prismEdge.position.y = 0.15;
+prismGroup.add(prismEdge);
+
+// Collimator (fixed at angle 0, i.e., along +X)
+const collimatorPivot = new THREE.Group();
+collimatorPivot.position.y = 0.75;
+spectrometer.add(collimatorPivot);
+
+const collArmGeo = new THREE.BoxGeometry(1.6, 0.08, 0.12);
+const collArm = new THREE.Mesh(collArmGeo, darkMetalMat);
+collArm.position.set(1.0, 0, 0);
+collArm.castShadow = true;
+collimatorPivot.add(collArm);
+
+const collTubeGeo = new THREE.CylinderGeometry(0.08, 0.08, 1.4, 24);
+const collTube = new THREE.Mesh(collTubeGeo, blackMat);
+collTube.rotation.z = Math.PI / 2;
+collTube.position.set(1.0, 0.06, 0);
+collTube.castShadow = true;
+collimatorPivot.add(collTube);
+
+// Collimator slit end
+const slitGeo = new THREE.BoxGeometry(0.02, 0.16, 0.02);
+const slitMat = new THREE.MeshStandardMaterial({ color: 0xffffcc, emissive: 0xffffaa, emissiveIntensity: 2 });
+const slit = new THREE.Mesh(slitGeo, slitMat);
+slit.position.set(0.3, 0.06, 0);
+collimatorPivot.add(slit);
+
+// Collimator objective end
+const collObjGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.05, 24);
+const collObj = new THREE.Mesh(collObjGeo, metalMat);
+collObj.rotation.z = Math.PI / 2;
+collObj.position.set(1.7, 0.06, 0);
+collimatorPivot.add(collObj);
+
+// Telescope (rotatable)
+const telescopePivot = new THREE.Group();
+telescopePivot.position.y = 0.75;
+spectrometer.add(telescopePivot);
+
+const telArmGeo = new THREE.BoxGeometry(1.6, 0.08, 0.12);
+const telArm = new THREE.Mesh(telArmGeo, darkMetalMat);
+telArm.position.set(-1.0, 0, 0);
+telArm.castShadow = true;
+telescopePivot.add(telArm);
+
+const telTubeGeo = new THREE.CylinderGeometry(0.09, 0.09, 1.5, 24);
+const telTube = new THREE.Mesh(telTubeGeo, blackMat);
+telTube.rotation.z = Math.PI / 2;
+telTube.position.set(-1.0, 0.06, 0);
+telTube.castShadow = true;
+telescopePivot.add(telTube);
+
+// Telescope eyepiece
+const eyeGeo = new THREE.CylinderGeometry(0.06, 0.08, 0.2, 24);
+const eyepiece = new THREE.Mesh(eyeGeo, metalMat);
+eyepiece.rotation.z = Math.PI / 2;
+eyepiece.position.set(-1.8, 0.06, 0);
+telescopePivot.add(eyepiece);
+
+// Telescope objective
+const telObjGeo = new THREE.CylinderGeometry(0.11, 0.11, 0.05, 24);
+const telObj = new THREE.Mesh(telObjGeo, metalMat);
+telObj.rotation.z = Math.PI / 2;
+telObj.position.set(-0.25, 0.06, 0);
+telescopePivot.add(telObj);
+
+// ============ LIGHT BEAMS ============
+const beamGroup = new THREE.Group();
+beamGroup.position.y = 0.81;
+scene.add(beamGroup);
+
+// Wavelengths for visible spectrum (nm)
+const wavelengths = [400, 430, 460, 490, 520, 550, 580, 610, 650, 700];
+const beamColors = [
+  0x8800ff, 0x4400ff, 0x0044ff, 0x00aaff, 0x00ff44,
+  0x88ff00, 0xffff00, 0xffaa00, 0xff4400, 0xff0000
+];
+
+function wavelengthToColor(wl) {
+  let r, g, b;
+  if (wl >= 380 && wl < 440) { r = -(wl - 440) / (440 - 380); g = 0; b = 1; }
+  else if (wl >= 440 && wl < 490) { r = 0; g = (wl - 440) / (490 - 440); b = 1; }
+  else if (wl >= 490 && wl < 510) { r = 0; g = 1; b = -(wl - 510) / (510 - 490); }
+  else if (wl >= 510 && wl < 580) { r = (wl - 510) / (580 - 510); g = 1; b = 0; }
+  else if (wl >= 580 && wl < 645) { r = 1; g = -(wl - 645) / (645 - 580); b = 0; }
+  else if (wl >= 645 && wl <= 780) { r = 1; g = 0; b = 0; }
+  else { r = 0; g = 0; b = 0; }
+  let f = 1;
+  if (wl >= 380 && wl < 420) f = 0.3 + 0.7 * (wl - 380) / (420 - 380);
+  else if (wl > 700 && wl <= 780) f = 0.3 + 0.7 * (780 - wl) / (780 - 700);
+  else if (wl < 380 || wl > 780) f = 0;
+  return new THREE.Color(r * f, g * f, b * f);
+}
+
+const beamLines = [];
+const beamMats = [];
+
+// Incident beam (white)
+const incBeamGeo = new THREE.BufferGeometry();
+const incBeamMat = new THREE.LineBasicMaterial({ color: 0xffffee, linewidth: 2, transparent: true, opacity: 0.9 });
+const incBeam = new THREE.Line(incBeamGeo, incBeamMat);
+beamGroup.add(incBeam);
+
+// Dispersed beams
+for (let i = 0; i < wavelengths.length; i++) {
+  const geo = new THREE.BufferGeometry();
+  const mat = new THREE.LineBasicMaterial({
+    color: beamColors[i], linewidth: 2, transparent: true, opacity: 0.8
+  });
+  const line = new THREE.Line(geo, mat);
+  beamGroup.add(line);
+  beamLines.push(line);
+  beamMats.push(mat);
+}
+
+// Glow beams (thicker, more transparent)
+const glowLines = [];
+for (let i = 0; i < wavelengths.length; i++) {
+  const geo = new THREE.BufferGeometry();
+  const mat = new THREE.LineBasicMaterial({
+    color: beamColors[i], linewidth: 1, transparent: true, opacity: 0.25
+  });
+  const line = new THREE.Line(geo, mat);
+  beamGroup.add(line);
+  glowLines.push(line);
+}
+
+// ============ STATE ============
+let state = {
+  n: 1.500,
+  telAngle: 180,
+  telFine: 0,
+  verAngle: 0,
+  verFine: 0,
+  prismPlaced: false,
+  prismAngle: 60 * Math.PI / 180 // 60 degrees
+};
+
+// ============ PHYSICS ============
+function getRefractiveIndex(baseN, wavelengthNm) {
+  // Cauchy-like dispersion: n(λ) = A + B/λ²
+  // Calibrate so that at 589nm (yellow), n = baseN
+  const refWl = 589;
+  const B = 0.004 * (baseN - 1) * 1e6; // scaled dispersion
+  const A = baseN - B / (refWl * refWl);
+  return A + B / (wavelengthNm * wavelengthNm);
+}
+
+function computeDeviation(n, prismAngleA, angleOfIncidence) {
+  // Snell's law at first surface
+  const sinR1 = Math.sin(angleOfIncidence) / n;
+  if (Math.abs(sinR1) > 1) return null; // total internal reflection at first surface
+  const r1 = Math.asin(sinR1);
+
+  // Angle at second surface
+  const r2 = prismAngleA - r1;
+  const sinE = n * Math.sin(r2);
+  if (Math.abs(sinE) > 1) return null; // total internal reflection
+  const e = Math.asin(sinE);
+
+  // Deviation
+  const deviation = angleOfIncidence + e - prismAngleA;
+  return { deviation, r1, r2, e };
+}
+
+function computeMinDeviation(n, prismAngleA) {
+  // At minimum deviation: i = e, r1 = r2 = A/2
+  const sinI = n * Math.sin(prismAngleA / 2);
+  if (Math.abs(sinI) > 1) return null;
+  const i = Math.asin(sinI);
+  const dm = 2 * i - prismAngleA;
+  return { dm, i };
+}
+
+// ============ UPDATE BEAMS ============
+function updateBeams() {
+  const A = state.prismAngle;
+  const verRad = ((state.verAngle + state.verFine) * Math.PI) / 180;
+  const telRad = ((state.telAngle + state.telFine) * Math.PI) / 180;
+
+  // Collimator is at angle 0 (along +X direction toward center)
+  // Light travels from collimator toward center: direction = (-1, 0, 0)
+  // Prism table rotation changes the orientation of the prism
+  // The prism's first face normal depends on verAngle
+
+  // For simplicity: the prism is oriented so that at verAngle=0,
+  // one face is perpendicular to the incident beam.
+  // The angle of incidence on the first face:
+  // i = 30° + verAngle (since prism apex angle is 60°, face is at 30° from base)
+  // Actually let's define it more carefully:
+  // At verAngle = 0, the prism is oriented so the first face makes 30° with the beam
+  // so angle of incidence = 30° + verAngle
+
+  const baseIncidence = 30 * Math.PI / 180;
+  const angleOfIncidence = baseIncidence + verRad;
+
+  // Update info
+  document.getElementById('info-aoi').textContent = (angleOfIncidence * 180 / Math.PI).toFixed(2) + '°';
+
+  // Incident beam: from collimator slit to prism center
+  const slitPos = new THREE.Vector3(0.3, 0, 0); // relative to beamGroup
+  const prismCenter = new THREE.Vector3(0, 0, 0);
+
+  // Extend incident beam
+  const incDir = new THREE.Vector3(-1, 0, 0);
+  const incStart = new THREE.Vector3(2.5, 0, 0);
+  const incEnd = prismCenter.clone();
+
+  incBeam.geometry.dispose();
+  const incPts = [incStart, incEnd];
+  incBeam.geometry.setFromPoints(incPts);
+
+  if (!state.prismPlaced) {
+    // No prism: beam goes straight through
+    for (let i = 0; i < beamLines.length; i++) {
+      beamLines[i].visible = false;
+      glowLines[i].visible = false;
+    }
+    // Show straight beam through
+    const straightEnd = new THREE.Vector3(-2.5, 0, 0);
+    incBeam.geometry.setFromPoints([incStart, straightEnd]);
+    return;
+  }
+
+  // Compute refraction for each wavelength
+  const emergentDirections = [];
+  const deviations = [];
+
+  for (let i = 0; i < wavelengths.length; i++) {
+    const n = getRefractiveIndex(state.n, wavelengths[i]);
+    const result = computeDeviation(n, A, angleOfIncidence);
+
+    if (result) {
+      deviations.push(result.deviation);
+      // The emergent beam direction:
+      // Incident direction is (-1,0,0). Deviation is measured from original direction.
+      // The beam bends toward the base of the prism.
+      // In our coordinate system, deviation rotates the beam clockwise (negative angle in XZ plane)
+      const devAngle = result.deviation;
+      const dir = new THREE.Vector3(
+        -Math.cos(devAngle),
+        0,
+        -Math.sin(devAngle)
+      );
+      emergentDirections.push(dir);
+      beamLines[i].visible = true;
+      glowLines[i].visible = true;
+
+      // Emergent beam from prism center
+      const endPt = prismCenter.clone().add(dir.clone().multiplyScalar(3));
+      beamLines[i].geometry.dispose();
+      beamLines[i].geometry.setFromPoints([prismCenter, endPt]);
+
+      glowLines[i].geometry.dispose();
+      glowLines[i].geometry.setFromPoints([prismCenter, endPt]);
+    } else {
+      beamLines[i].visible = false;
+      glowLines[i].visible = false;
+      deviations.push(null);
+      emergentDirections.push(null);
+    }
+  }
+
+  // Yellow (580nm) deviation for info
+  const yellowIdx = 6; // 580nm
+  if (deviations[yellowIdx] !== null && deviations[yellowIdx] !== undefined) {
+    document.getElementById('info-dev').textContent = (deviations[yellowIdx] * 180 / Math.PI).toFixed(2) + '°';
+  } else {
+    document.getElementById('info-dev').textContent = 'TIR';
+  }
+
+  // Min deviation
+  const minDev = computeMinDeviation(state.n, A);
+  if (minDev) {
+    document.getElementById('info-dm').textContent = (minDev.dm * 180 / Math.PI).toFixed(2) + '°';
+  }
+
+  // Store for telescope view
+  state._deviations = deviations;
+  state._emergentDirs = emergentDirections;
+  state._angleOfIncidence = angleOfIncidence;
+}
+
+// ============ TELESCOPE VIEW ============
+const tvCanvas = document.getElementById('tv-canvas');
+const tvCtx = tvCanvas.getContext('2d');
+
+function drawTelescopeView() {
+  const w = tvCanvas.width, h = tvCanvas.height;
+  tvCtx.fillStyle = '#000005';
+  tvCtx.fillRect(0, 0, w, h);
+
+  if (!state.prismPlaced) {
+    // Show white slit
+    const telRad = ((state.telAngle + state.telFine) * Math.PI) / 180;
+    // Straight through is at 180°
+    const diff = Math.abs(telRad - Math.PI);
+    if (diff < 0.02) {
+      const brightness = Math.max(0, 1 - diff / 0.02);
+      tvCtx.fillStyle = `rgba(255,255,240,${brightness})`;
+      tvCtx.fillRect(w / 2 - 2, h * 0.1, 4, h * 0.8);
+    }
+    drawCrosshairTV(w, h);
+    return;
+  }
+
+  const telRad = ((state.telAngle + state.telFine) * Math.PI) / 180;
+  // Telescope points in direction: angle from +X axis
+  // telAngle=180 means pointing along -X (straight through from collimator)
+  // The telescope direction vector:
+  const telDirAngle = telRad; // angle in XZ plane from +X
+  const telDir = new THREE.Vector3(Math.cos(telDirAngle), 0, Math.sin(telDirAngle));
+
+  // Check each wavelength
+  let observedWl = null;
+  let maxBrightness = 0;
+
+  for (let i = 0; i < wavelengths.length; i++) {
+    if (!state._emergentDirs || !state._emergentDirs[i]) continue;
+    const dir = state._emergentDirs[i];
+    // Angle between telescope direction and emergent beam
+    // Both are unit vectors in XZ plane
+    const dot = telDir.x * dir.x + telDir.z * dir.z;
+    const angleDiff = Math.acos(Math.min(1, Math.max(-1, dot)));
+
+    // Telescope acceptance angle (~0.5°)
+    const acceptance = 0.015; // radians
+    if (angleDiff < acceptance) {
+      const brightness = Math.pow(1 - angleDiff / acceptance, 2);
+      if (brightness > maxBrightness) {
+        maxBrightness = brightness;
+        observedWl = wavelengths[i];
+      }
+
+      // Draw spectral line
+      const color = wavelengthToColor(wavelengths[i]);
+      const r = Math.round(color.r * 255);
+      const g = Math.round(color.g * 255);
+      const b = Math.round(color.b * 255);
+
+      // Position on screen based on angle difference
+      const screenX = w / 2 + (angleDiff / acceptance) * (w * 0.3) * (dir.z > telDir.z ? 1 : -1);
+
+      const grad = tvCtx.createLinearGradient(screenX - 15, 0, screenX + 15, 0);
+      grad.addColorStop(0, `rgba(${r},${g},${b},0)`);
+      grad.addColorStop(0.3, `rgba(${r},${g},${b},${brightness * 0.5})`);
+      grad.addColorStop(0.5, `rgba(${r},${g},${b},${brightness})`);
+      grad.addColorStop(0.7, `rgba(${r},${g},${b},${brightness * 0.5})`);
+      grad.addColorStop(1, `rgba(${r},${g},${b},0)`);
+
+      tvCtx.fillStyle = grad;
+      tvCtx.fillRect(screenX - 15, h * 0.05, 30, h * 0.9);
+
+      // Bright core
+      tvCtx.fillStyle = `rgba(${Math.min(255, r + 100)},${Math.min(255, g + 100)},${Math.min(255, b + 100)},${brightness * 0.8})`;
+      tvCtx.fillRect(screenX - 1, h * 0.1, 2, h * 0.8);
+    }
+  }
+
+  if (observedWl && maxBrightness > 0.1) {
+    document.getElementById('info-lambda').textContent = observedWl + ' nm';
+  } else {
+    document.getElementById('info-lambda').textContent = '—';
+  }
+
+  drawCrosshairTV(w, h);
+}
+
+function drawCrosshairTV(w, h) {
+  tvCtx.strokeStyle = 'rgba(255,255,255,0.15)';
+  tvCtx.lineWidth = 1;
+  tvCtx.beginPath();
+  tvCtx.moveTo(w / 2, 0);
+  tvCtx.lineTo(w / 2, h);
+  tvCtx.moveTo(0, h / 2);
+  tvCtx.lineTo(w, h / 2);
+  tvCtx.stroke();
+
+  // Circular mask
+  tvCtx.globalCompositeOperation = 'destination-in';
+  tvCtx.beginPath();
+  tvCtx.arc(w / 2, h / 2, w / 2 - 2, 0, Math.PI * 2);
+  tvCtx.fill();
+  tvCtx.globalCompositeOperation = 'source-over';
+
+  // Border ring
+  tvCtx.strokeStyle = 'rgba(100,120,150,0.3)';
+  tvCtx.lineWidth = 2;
+  tvCtx.beginPath();
+  tvCtx.arc(w / 2, h / 2, w / 2 - 3, 0, Math.PI * 2);
+  tvCtx.stroke();
+}
+
+// ============ UPDATE 3D POSITIONS ============
+function updatePositions() {
+  const telRad = ((state.telAngle + state.telFine) * Math.PI) / 180;
+  const verRad = ((state.verAngle + state.verFine) * Math.PI) / 180;
+
+  // Telescope rotation: 180° = pointing along -X (toward collimator)
+  // We rotate the telescope pivot around Y
+  // At 180°, the telescope arm should point toward -X
+  // The telescope arm is built pointing along -X at rotation 0
+  // So we need to rotate by (telAngle - 180) degrees
+  telescopePivot.rotation.y = -(telRad - Math.PI);
+
+  // Vernier table rotation
+  tablePivot.rotation.y = -verRad;
+
+  // Update glass material IOR
+  glassMat.ior = state.n;
+
+  // Info
+  document.getElementById('info-tel').textContent = (state.telAngle + state.telFine).toFixed(2) + '°';
+  document.getElementById('info-ver').textContent = (state.verAngle + state.verFine).toFixed(2) + '°';
+  document.getElementById('info-n').textContent = state.n.toFixed(3);
+  document.getElementById('info-prism').textContent = state.prismPlaced ? 'Yes' : 'No';
+  document.getElementById('info-prism').style.color = state.prismPlaced ? '#4f8' : '#f84';
+}
+
+// ============ CONTROLS ============
+const slN = document.getElementById('sl-n');
+const slTel = document.getElementById('sl-tel');
+const slTelF = document.getElementById('sl-tel-f');
+const slVer = document.getElementById('sl-ver');
+const slVerF = document.getElementById('sl-ver-f');
+
+function readControls() {
+  state.n = parseFloat(slN.value);
+  state.telAngle = parseFloat(slTel.value);
+  state.telFine = parseFloat(slTelF.value);
+  state.verAngle = parseFloat(slVer.value);
+  state.verFine = parseFloat(slVerF.value);
+
+  document.getElementById('v-n').textContent = state.n.toFixed(3);
+  document.getElementById('v-tel').textContent = state.telAngle.toFixed(1) + '°';
+  document.getElementById('v-tel-f').textContent = state.telFine.toFixed(2) + '°';
+  document.getElementById('v-ver').textContent = state.verAngle.toFixed(1) + '°';
+  document.getElementById('v-ver-f').textContent = state.verFine.toFixed(2) + '°';
+}
+
+[slN, slTel, slTelF, slVer, slVerF].forEach(sl => {
+  sl.addEventListener('input', () => {
+    readControls();
+    updatePositions();
+    updateBeams();
+  });
+});
+
+// Prism button
+const btnPrism = document.getElementById('btn-prism');
+btnPrism.addEventListener('click', () => {
+  state.prismPlaced = !state.prismPlaced;
+  prismGroup.visible = state.prismPlaced;
+  btnPrism.textContent = state.prismPlaced ? '🔺 Remove Prism' : '🔺 Place Prism';
+  btnPrism.classList.toggle('active', state.prismPlaced);
+  updateBeams();
+});
+
+// Reset button
+document.getElementById('btn-reset').addEventListener('click', () => {
+  slN.value = 1.500;
+  slTel.value = 180;
+  slTelF.value = 0;
+  slVer.value = 0;
+  slVerF.value = 0;
+  state.prismPlaced = false;
+  prismGroup.visible = false;
+  btnPrism.textContent = '🔺 Place Prism';
+  btnPrism.classList.remove('active');
+  readControls();
+  updatePositions();
+  updateBeams();
+});
+
+// Find minimum deviation
+document.getElementById('btn-mindev').addEventListener('click', () => {
+  if (!state.prismPlaced) {
+    state.prismPlaced = true;
+    prismGroup.visible = true;
+    btnPrism.textContent = '🔺 Remove Prism';
+    btnPrism.classList.add('active');
+  }
+  const minDev = computeMinDeviation(state.n, state.prismAngle);
+  if (minDev) {
+    // At minimum deviation, the prism should be oriented symmetrically
+    // verAngle = 0 for symmetric position
+    slVer.value = 0;
+    slVerF.value = 0;
+    // Telescope should be at 180° + deviation (in degrees)
+    const telTarget = 180 + (minDev.dm * 180 / Math.PI);
+    slTel.value = Math.round(telTarget * 10) / 10;
+    slTelF.value = (telTarget - parseFloat(slTel.value)).toFixed(2);
+    readControls();
+    updatePositions();
+    updateBeams();
+  }
+});
+
+// ============ ANIMATION LOOP ============
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  drawTelescopeView();
+  renderer.render(scene, camera);
+}
+
+// ============ RESIZE ============
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ============ INIT ============
+readControls();
+updatePositions();
+updateBeams();
+animate();
+</script>
+</body>
+</html>
+<-- 
+
+## What This Simulator Includes
+
+### 🔬 3D Spectrometer Model
+- **Collimator** (fixed) with illuminated slit
+- **Telescope** (rotatable) with eyepiece and objective
+- **Prism table** with leveling screws (rotatable)
+- **Graduated circular scale** with degree markings
+- **Central pillar** and base plate
+- **Glass prism** with physically-based transparency/refraction material
+
+### 🎛️ Interactive Controls
+| Control | Function |
+|---|---|
+| **Refractive Index** | Slider from 1.30 to 1.80 with Cauchy dispersion |
+| **Telescope Coarse** | Rotates telescope 100°–260° |
+| **Telescope Fine** | ±0.5° precision adjustment |
+| **Vernier Coarse** | Rotates prism table ±60° |
+| **Vernier Fine** | ±0.5° precision adjustment |
+| **Place/Remove Prism** | Toggles prism on the table |
+| **Find Min Deviation** | Auto-aligns for yellow (589nm) minimum deviation |
+
+### 📊 Real-Time Physics
+- **Snell's Law** refraction at both prism surfaces
+- **Cauchy dispersion** — each wavelength gets a slightly different refractive index
+- **Total internal reflection** detection
+- **Minimum deviation** calculation: `n = sin((A+Dₘ)/2) / sin(A/2)`
+- **10 wavelength beams** (400–700nm) rendered as colored rays
+
+### 🔭 Telescope Viewport
+- Circular eyepiece view with crosshair
+- Shows spectral lines when the telescope aligns with a dispersed beam
+- Brightness fades based on angular alignment precision
+- Reports observed wavelength
+
+### How to Perform the Experiment
+1. Click **Place Prism**
+2. Adjust **Vernier** to change the angle of incidence
+3. Sweep the **Telescope** to find spectral lines in the viewport
+4. Use **Fine** sliders for precise alignment
+5. Click **Find Min Deviation** to auto-locate the symmetric position
+6. Change **Refractive Index** and observe how deviation shifts
+-->
