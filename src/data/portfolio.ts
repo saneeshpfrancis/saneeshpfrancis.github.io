@@ -11,7 +11,11 @@ import {
   Presentation,
   Radio,
 } from "lucide-react";
-import { GitHubIcon, LinkedInIcon, type IconType } from "../components/ui/BrandIcons";
+import {
+  GitHubIcon,
+  LinkedInIcon,
+  type IconType,
+} from "../components/ui/BrandIcons";
 
 /* -------------------------------------------------------------------------- */
 /*  Edit this file to update the content of the portfolio                     */
@@ -25,7 +29,8 @@ export function yearsOfExperience(): number {
   let years = now.getFullYear() - CAREER_START.getFullYear();
   const beforeAnniversary =
     now.getMonth() < CAREER_START.getMonth() ||
-    (now.getMonth() === CAREER_START.getMonth() && now.getDate() < CAREER_START.getDate());
+    (now.getMonth() === CAREER_START.getMonth() &&
+      now.getDate() < CAREER_START.getDate());
   if (beforeAnniversary) years -= 1;
   return years;
 }
@@ -49,7 +54,7 @@ export const profile = {
   workLocation: "Amritapuri, Kollam",
   email: "saneeshpf@gmail.com",
   languages: ["Malayalam", "English"],
-  cvUrl: "https://saneeshpfrancis.github.io/assets/doc/Saneesh_CV_2022.pdf",
+  cvUrl: "assets/doc/saneeshpf.pdf",
   /**
    * Optional: set your date of birth as "YYYY-MM-DD" to display your age in the
    * About section (it is calculated automatically). Leave as null to hide it.
@@ -60,8 +65,16 @@ export const profile = {
 export type SocialLink = { label: string; href: string; icon: IconType };
 
 export const socials: SocialLink[] = [
-  { label: "LinkedIn", href: "https://www.linkedin.com/in/saneeshpf/", icon: LinkedInIcon },
-  { label: "GitHub", href: "https://github.com/saneeshpfrancis", icon: GitHubIcon },
+  {
+    label: "LinkedIn",
+    href: "https://www.linkedin.com/in/saneeshpf/",
+    icon: LinkedInIcon,
+  },
+  {
+    label: "GitHub",
+    href: "https://github.com/saneeshpfrancis",
+    icon: GitHubIcon,
+  },
   { label: "Email", href: `mailto:${profile.email}`, icon: Mail },
 ];
 
@@ -139,7 +152,12 @@ export const experience: Experience[] = [
       "Represent Amrita Virtual Labs at national and international forums — including facilitating the Commonwealth of Learning workshop in Nairobi, Kenya (2022).",
       "Co-author peer-reviewed research on learning analytics, student motivation and reflective learning with virtual laboratories.",
     ],
-    tags: ["Project Management", "Technical Leadership", "Virtual Labs", "Research"],
+    tags: [
+      "Project Management",
+      "Technical Leadership",
+      "Virtual Labs",
+      "Research",
+    ],
   },
   {
     role: "Project Assistant — VALUE Virtual Labs",
@@ -194,12 +212,18 @@ export const education: Education[] = [
   },
 ];
 
-export type SkillGroup = { title: string; description: string; icon: LucideIcon; skills: string[] };
+export type SkillGroup = {
+  title: string;
+  description: string;
+  icon: LucideIcon;
+  skills: string[];
+};
 
 export const skillGroups: SkillGroup[] = [
   {
     title: "Virtual Lab Engineering",
-    description: "Turning physics concepts into interactive, browser-based experiments.",
+    description:
+      "Turning physics concepts into interactive, browser-based experiments.",
     icon: Atom,
     skills: [
       "Physics Simulations",
@@ -212,7 +236,8 @@ export const skillGroups: SkillGroup[] = [
   },
   {
     title: "Project Leadership",
-    description: "Delivering multidisciplinary education-technology projects on time.",
+    description:
+      "Delivering multidisciplinary education-technology projects on time.",
     icon: ClipboardList,
     skills: [
       "Project Planning & Delivery",
@@ -238,7 +263,8 @@ export const skillGroups: SkillGroup[] = [
   },
   {
     title: "Domain Knowledge",
-    description: "Strong foundations across the physical and computer sciences.",
+    description:
+      "Strong foundations across the physical and computer sciences.",
     icon: Microscope,
     skills: [
       "Classical Mechanics",
@@ -268,7 +294,12 @@ export const projects: Project[] = [
     period: "2011 – Present",
     description:
       "Amrita's flagship virtual laboratory platform delivering computer-simulated, remote-triggered and interactive animation-based physics experiments — freely accessible over the internet as part of India's national Virtual Labs initiative.",
-    tags: ["Simulations", "Interactive Animations", "Remote Triggered", "Open Access"],
+    tags: [
+      "Simulations",
+      "Interactive Animations",
+      "Remote Triggered",
+      "Open Access",
+    ],
     icon: Atom,
     link: "https://vlab.amrita.edu",
     linkLabel: "vlab.amrita.edu",
@@ -317,12 +348,14 @@ export const publications: Publication[] = [
     publisher: "Elsevier",
     year: 2023,
     type: "Journal",
-    authors: "Shyam Diwakar, Vysakh Kani Kolil, Saneesh P. Francis, Krishnashree Achuthan",
+    authors:
+      "Shyam Diwakar, Vysakh Kani Kolil, Saneesh P. Francis, Krishnashree Achuthan",
   },
   {
     title:
       "Impact of remote experimentation, interactivity and platform effectiveness on laboratory learning outcomes",
-    venue: "International Journal of Educational Technology in Higher Education",
+    venue:
+      "International Journal of Educational Technology in Higher Education",
     publisher: "Springer",
     year: 2021,
     type: "Journal",
@@ -349,15 +382,18 @@ export const publications: Publication[] = [
   },
   {
     title: "Learning curve analysis for virtual laboratory experimentation",
-    venue: "International Conference on Advances in Computing, Communications and Informatics (ICACCI)",
+    venue:
+      "International Conference on Advances in Computing, Communications and Informatics (ICACCI)",
     publisher: "IEEE",
     year: 2016,
     type: "Conference",
     authors: "Saneesh P. Francis, Vysakh Kani Kolil, Krishnashree Achuthan",
   },
   {
-    title: "Improving perception of invisible phenomena in undergraduate physics education using ICT",
-    venue: "International Conference on Information and Communication Technology (ICoICT)",
+    title:
+      "Improving perception of invisible phenomena in undergraduate physics education using ICT",
+    venue:
+      "International Conference on Information and Communication Technology (ICoICT)",
     publisher: "IEEE",
     year: 2014,
     type: "Conference",
@@ -405,7 +441,11 @@ export const workshops: Workshop[] = [
     date: "September 2023",
     description:
       "Delivered lectures on the introduction to virtual labs and their role in improving students' academic performance to around 400 UG and PG science students, followed by hands-on training.",
-    highlights: ["~400 participants", "Lecture + demonstration", "Hands-on lab session"],
+    highlights: [
+      "~400 participants",
+      "Lecture + demonstration",
+      "Hands-on lab session",
+    ],
   },
   {
     title: "One-day Workshop on Virtual Labs",
@@ -415,7 +455,11 @@ export const workshops: Workshop[] = [
     date: "June 2025",
     description:
       "Resource person sharing insights into the virtual lab platform and its potential to enhance learning, followed by a hands-on training session in the computer lab.",
-    highlights: ["Resource person", "Platform walkthrough", "Hands-on training"],
+    highlights: [
+      "Resource person",
+      "Platform walkthrough",
+      "Hands-on training",
+    ],
   },
   {
     title: "Faculty & Student Training Programs",
@@ -425,7 +469,11 @@ export const workshops: Workshop[] = [
     date: "2011 – Present",
     description:
       "Regularly conducts awareness and hands-on workshops that help institutions adopt virtual labs as pre-lab and post-lab learning tools.",
-    highlights: ["Awareness sessions", "Faculty development", "Student training"],
+    highlights: [
+      "Awareness sessions",
+      "Faculty development",
+      "Student training",
+    ],
   },
 ];
 
