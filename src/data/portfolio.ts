@@ -343,6 +343,25 @@ export type Publication = {
 export const publications: Publication[] = [
   {
     title:
+      "Exploring gender dynamics in cybersecurity education: A self-determination theory and social cognitive theory perspective",
+
+    venue: "Computers & Security, Vol. 144, 103968",
+
+    publisher: "Elsevier",
+
+    year: 2024,
+
+    type: "Journal",
+
+    authors:
+      "Saneesh P. Francis, Vysakh Kani Kolil, Vipin Pavithran, Indrakshi Ray, Krishnashree Achuthan",
+
+    doi: "https://doi.org/10.1016/j.cose.2024.103968",
+
+    url: "https://www.sciencedirect.com/science/article/pii/S0167404824002736",
+  },
+  {
+    title:
       "Intrinsic and extrinsic motivation among students for laboratory courses — Assessing the impact of virtual laboratories",
     venue: "Computers & Education, Vol. 198, 104758",
     publisher: "Elsevier",

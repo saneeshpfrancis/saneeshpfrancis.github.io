@@ -1,5 +1,12 @@
 import { motion } from "framer-motion";
-import { ArrowRight, Atom, BookOpen, Download, MapPin, Radio } from "lucide-react";
+import {
+  ArrowRight,
+  Atom,
+  BookOpen,
+  Download,
+  MapPin,
+  Radio,
+} from "lucide-react";
 import { profile, publications, socials, stats } from "@/data/portfolio";
 import { AtomVisual } from "./ui/AtomVisual";
 import { Typewriter } from "./ui/Typewriter";
@@ -11,12 +18,19 @@ const container = {
 
 const item = {
   hidden: { opacity: 0, y: 24 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] as const } },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] as const },
+  },
 };
 
 export function Hero() {
   return (
-    <section id="home" className="relative overflow-hidden pt-28 pb-16 md:pt-36 md:pb-24">
+    <section
+      id="home"
+      className="relative overflow-hidden pt-28 pb-16 md:pt-36 md:pb-24"
+    >
       {/* Background decoration */}
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="bg-grid absolute inset-0 [mask-image:radial-gradient(ellipse_at_center,black_35%,transparent_75%)]" />
@@ -27,7 +41,12 @@ export function Hero() {
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <div className="grid items-center gap-14 lg:grid-cols-[1.1fr_0.9fr] lg:gap-10">
           {/* Copy */}
-          <motion.div variants={container} initial="hidden" animate="visible" className="max-w-2xl">
+          <motion.div
+            variants={container}
+            initial="hidden"
+            animate="visible"
+            className="max-w-2xl"
+          >
             <motion.div
               variants={item}
               className="mb-6 inline-flex items-center gap-2.5 rounded-full border border-border bg-card/70 py-1.5 pr-4 pl-2 text-sm text-muted-foreground shadow-sm backdrop-blur"
@@ -54,11 +73,17 @@ export function Hero() {
               <Typewriter words={profile.roles} className="text-primary" />
             </motion.p>
 
-            <motion.p variants={item} className="mt-6 text-base leading-relaxed text-muted-foreground md:text-lg">
+            <motion.p
+              variants={item}
+              className="mt-6 text-base leading-relaxed text-muted-foreground md:text-lg"
+            >
               {profile.intro}
             </motion.p>
 
-            <motion.div variants={item} className="mt-8 flex flex-wrap items-center gap-3">
+            <motion.div
+              variants={item}
+              className="mt-8 flex flex-wrap items-center gap-3"
+            >
               <a
                 href={profile.cvUrl}
                 target="_blank"
@@ -77,7 +102,10 @@ export function Hero() {
               </a>
             </motion.div>
 
-            <motion.div variants={item} className="mt-8 flex flex-wrap items-center gap-5">
+            <motion.div
+              variants={item}
+              className="mt-8 flex flex-wrap items-center gap-5"
+            >
               <div className="flex items-center gap-2">
                 {socials.map(({ label, href, icon: Icon }) => (
                   <a
@@ -125,8 +153,8 @@ export function Hero() {
               <FloatingBadge
                 className="top-[48%] -right-2 animate-float-slow sm:right-0"
                 icon={<Radio className="h-4 w-4" />}
-                title="Remote-Triggered Labs"
-                subtitle="Real instruments, online"
+                title="Hands-On STEM Training"
+                subtitle="Practical skills for teachers & students"
               />
               <FloatingBadge
                 className="bottom-[8%] left-[6%] animate-float [animation-delay:2.4s]"
@@ -146,8 +174,13 @@ export function Hero() {
           className="glass mt-16 grid grid-cols-2 divide-border/70 rounded-2xl shadow-xl shadow-black/5 md:mt-24 md:grid-cols-4 md:divide-x"
         >
           {stats.map((s) => (
-            <div key={s.label} className="flex flex-col items-center px-6 py-6 text-center md:py-7">
-              <span className="font-display text-3xl font-bold text-gradient md:text-4xl">{s.value}</span>
+            <div
+              key={s.label}
+              className="flex flex-col items-center px-6 py-6 text-center md:py-7"
+            >
+              <span className="font-display text-3xl font-bold text-gradient md:text-4xl">
+                {s.value}
+              </span>
               <span className="mt-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase">
                 {s.label}
               </span>
@@ -185,7 +218,9 @@ function FloatingBadge({
     <div
       className={`glass absolute z-10 flex items-center gap-3 rounded-2xl px-3.5 py-2.5 shadow-lg shadow-black/10 ${className ?? ""}`}
     >
-      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15 text-primary">{icon}</span>
+      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15 text-primary">
+        {icon}
+      </span>
       <span className="flex flex-col">
         <span className="text-sm font-semibold text-foreground">{title}</span>
         <span className="text-[11px] text-muted-foreground">{subtitle}</span>
