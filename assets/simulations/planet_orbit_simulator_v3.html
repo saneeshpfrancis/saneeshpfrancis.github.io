@@ -1,0 +1,380 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+#app { display: flex; height: 600px; background: #000008; border-radius: var(--border-radius-lg); overflow: hidden; }
+#panel {
+  width: 220px; min-width: 220px; background: #0a0a1a; border-right: 0.5px solid #2a2a4a;
+  display: flex; flex-direction: column; padding: 14px; gap: 14px; overflow-y: auto;
+}
+#panel h2 { font-size: 13px; font-weight: 500; color: #aab; letter-spacing: 0.5px; text-transform: uppercase; }
+.ctrl-group { display: flex; flex-direction: column; gap: 6px; }
+.ctrl-label { font-size: 12px; color: #778; display: flex; justify-content: space-between; }
+.ctrl-label span { color: #ccdfff; font-weight: 500; }
+input[type=range] { width: 100%; accent-color: #5588ff; }
+.btn {
+  padding: 7px 10px; border: 0.5px solid #3a4a7a; border-radius: 6px; background: #141430;
+  color: #99aadd; font-size: 13px; cursor: pointer; transition: background 0.15s;
+}
+.btn:hover { background: #1e2048; color: #ccd; }
+.btn.primary { border-color: #5577cc; background: #1a2255; color: #aaccff; }
+.btn.primary:hover { background: #253070; }
+.btn.pause { border-color: #557755; background: #142014; color: #88cc88; }
+.btn.pause:hover { background: #1e301e; }
+.btn.resume { border-color: #775533; background: #201408; color: #ffaa55; }
+.btn.resume:hover { background: #302010; }
+.divider { border: none; border-top: 0.5px solid #1e1e3a; }
+#planet-info { display: flex; flex-direction: column; gap: 8px; }
+#planet-info.hidden { display: none; }
+.info-title { font-size: 12px; color: #556; font-weight: 500; text-transform: uppercase; letter-spacing: 0.4px; }
+.info-val { font-size: 14px; color: #bbccff; font-weight: 500; }
+.info-row { display: flex; flex-direction: column; gap: 2px; }
+.planet-colors { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
+.color-dot { width: 18px; height: 18px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: border-color 0.15s; }
+.color-dot.selected { border-color: white; }
+#hint { font-size: 12px; color: #445; line-height: 1.6; }
+</style>
+
+<div id="app">
+  <div id="panel">
+    <h2>Star System</h2>
+    <div class="ctrl-group">
+      <div class="ctrl-label">Star mass <span id="star-mass-val">1.0 M☉</span></div>
+      <input type="range" id="star-mass" min="1" max="10" step="0.1" value="1">
+    </div>
+    <hr class="divider">
+    <div class="ctrl-group">
+      <div class="ctrl-label">New planet color</div>
+      <div class="planet-colors" id="color-picker">
+        <div class="color-dot selected" data-color="#4488ff" style="background:#4488ff"></div>
+        <div class="color-dot" data-color="#44ffaa" style="background:#44ffaa"></div>
+        <div class="color-dot" data-color="#ff8844" style="background:#ff8844"></div>
+        <div class="color-dot" data-color="#ff44aa" style="background:#ff44aa"></div>
+        <div class="color-dot" data-color="#ffdd44" style="background:#ffdd44"></div>
+        <div class="color-dot" data-color="#cc88ff" style="background:#cc88ff"></div>
+      </div>
+    </div>
+    <button class="btn primary" id="add-btn">＋ Add planet</button>
+    <button class="btn pause" id="pause-btn">⏸ Pause</button>
+    <button class="btn" id="clear-btn">✕ Clear all</button>
+    <hr class="divider">
+    <div id="planet-info" class="hidden">
+      <div class="info-title">Selected planet</div>
+      <div class="ctrl-group">
+        <div class="ctrl-label">Mass <span id="sel-mass-val">1.0 M⊕</span></div>
+        <input type="range" id="sel-mass" min="0.1" max="20" step="0.1" value="1">
+      </div>
+      <div class="info-row">
+        <div class="ctrl-label">Orbital speed</div>
+        <div class="info-val" id="sel-speed">— km/s</div>
+      </div>
+      <div class="info-row">
+        <div class="ctrl-label">Distance from star</div>
+        <div class="info-val" id="sel-dist">— AU</div>
+      </div>
+      <div class="info-row">
+        <div class="ctrl-label">Orbital period</div>
+        <div class="info-val" id="sel-period">— yr</div>
+      </div>
+      <button class="btn" id="delete-btn" style="margin-top:4px; border-color:#663; color:#cc8888;">✕ Remove planet</button>
+    </div>
+    <div id="hint">Click a planet to select it. Then drag the yellow arrow tip to change its velocity.</div>
+  </div>
+  <div id="canvas-wrap" style="flex:1; position:relative;">
+    <canvas id="c" style="display:block;"></canvas>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const wrap = document.getElementById('canvas-wrap');
+const pauseBtn = document.getElementById('pause-btn');
+
+const G = 6.674e-11;
+const AU = 1.496e11;
+const SOLAR_MASS = 1.989e30;
+const EARTH_MASS = 5.972e24;
+const YEAR = 3.156e7;
+const TRAIL_LIFE = 160;
+const DT = 3600 * 24 * 2;
+const SCALE = 160 / AU;
+const ARROW_PX = 70;
+
+let W, H, cx, cy;
+let starMass = 1 * SOLAR_MASS;
+let planets = [];
+let selectedPlanet = null;
+let addMode = false;
+let draggingArrow = false;
+let selectedColor = '#4488ff';
+let paused = false;
+
+function resize() {
+  W = wrap.clientWidth; H = wrap.clientHeight;
+  canvas.width = W; canvas.height = H;
+  cx = W / 2; cy = H / 2;
+}
+resize();
+
+function getMouse(e) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (e.clientX ?? e.touches[0].clientX) - rect.left,
+    y: (e.clientY ?? e.touches[0].clientY) - rect.top
+  };
+}
+
+function makePlanet(px, py, color) {
+  const dx = (px - cx) / SCALE;
+  const dy = (py - cy) / SCALE;
+  const r = Math.sqrt(dx*dx + dy*dy);
+  const vOrb = Math.sqrt(G * starMass / r);
+  const ang = Math.atan2(dy, dx);
+  return {
+    id: Math.random(), px, py,
+    vx: -Math.sin(ang) * vOrb,
+    vy:  Math.cos(ang) * vOrb,
+    mass: 1 * EARTH_MASS, color, size: 6,
+    trail: [], alive: true
+  };
+}
+
+function arrowTip(p) {
+  const v = Math.sqrt(p.vx*p.vx + p.vy*p.vy);
+  if (v === 0) return { x: p.px + ARROW_PX, y: p.py };
+  return { x: p.px + (p.vx/v)*ARROW_PX, y: p.py + (p.vy/v)*ARROW_PX };
+}
+
+function updatePhysics() {
+  if (paused) return;
+  for (let p of planets) {
+    if (!p.alive) continue;
+    const dx = (cx - p.px) / SCALE;
+    const dy = (cy - p.py) / SCALE;
+    const r2 = dx*dx + dy*dy;
+    const r = Math.sqrt(r2);
+    if (r < 15/SCALE) { p.alive = false; continue; }
+    const a = G * starMass / r2;
+    p.vx += (a * dx/r) * DT;
+    p.vy += (a * dy/r) * DT;
+    p.trail.push({ x: p.px, y: p.py, age: 0 });
+    if (p.trail.length > 400) p.trail.shift();
+    p.px += p.vx * DT * SCALE;
+    p.py += p.vy * DT * SCALE;
+    for (let t of p.trail) t.age++;
+    p.trail = p.trail.filter(t => t.age < TRAIL_LIFE);
+  }
+  planets = planets.filter(p => p.alive);
+  if (selectedPlanet && !planets.includes(selectedPlanet)) deselect();
+}
+
+function drawBgStars() {
+  ctx.fillStyle = '#ffffff22';
+  for (let i = 0; i < 100; i++) {
+    ctx.beginPath();
+    ctx.arc((i*173.1+11)%W, (i*97.7+5)%H, 0.4+(i%3)*0.35, 0, Math.PI*2);
+    ctx.fill();
+  }
+}
+
+function drawPausedOverlay() {
+  ctx.fillStyle = '#ffffff18';
+  ctx.font = '500 13px var(--font-sans, sans-serif)';
+  ctx.textAlign = 'right';
+  ctx.fillText('PAUSED', W - 14, 22);
+  ctx.textAlign = 'left';
+}
+
+function drawStar() {
+  const r = 16 + (starMass/SOLAR_MASS)*2.5;
+  const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r*2.8);
+  g.addColorStop(0, '#fffde8');
+  g.addColorStop(0.25, '#ffea44');
+  g.addColorStop(0.6, '#ff8800');
+  g.addColorStop(1, 'transparent');
+  ctx.beginPath(); ctx.arc(cx, cy, r*2.8, 0, Math.PI*2);
+  ctx.fillStyle = g; ctx.fill();
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2);
+  ctx.fillStyle = '#fffef0'; ctx.fill();
+}
+
+function drawPlanet(p) {
+  if (p.trail.length > 1) {
+    for (let i = 1; i < p.trail.length; i++) {
+      const alpha = Math.max(0, 1 - p.trail[i].age/TRAIL_LIFE);
+      ctx.beginPath();
+      ctx.moveTo(p.trail[i-1].x, p.trail[i-1].y);
+      ctx.lineTo(p.trail[i].x, p.trail[i].y);
+      ctx.strokeStyle = p.color + Math.floor(alpha*200).toString(16).padStart(2,'0');
+      ctx.lineWidth = 1.5; ctx.stroke();
+    }
+  }
+  const g = ctx.createRadialGradient(p.px-p.size*0.3, p.py-p.size*0.3, 0, p.px, p.py, p.size);
+  g.addColorStop(0, '#ffffff');
+  g.addColorStop(0.35, p.color);
+  g.addColorStop(1, p.color+'99');
+  ctx.beginPath(); ctx.arc(p.px, p.py, p.size, 0, Math.PI*2);
+  ctx.fillStyle = g; ctx.fill();
+  if (p === selectedPlanet) {
+    ctx.beginPath(); ctx.arc(p.px, p.py, p.size+5, 0, Math.PI*2);
+    ctx.strokeStyle = '#ffffff44'; ctx.lineWidth = 1.5; ctx.stroke();
+    drawArrow(p);
+  }
+}
+
+function drawArrow(p) {
+  const tip = arrowTip(p);
+  const ang = Math.atan2(tip.y-p.py, tip.x-p.px);
+  ctx.beginPath(); ctx.moveTo(p.px, p.py); ctx.lineTo(tip.x, tip.y);
+  ctx.strokeStyle = '#ffdd44'; ctx.lineWidth = 2.5; ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(tip.x, tip.y);
+  ctx.lineTo(tip.x-11*Math.cos(ang-0.38), tip.y-11*Math.sin(ang-0.38));
+  ctx.lineTo(tip.x-11*Math.cos(ang+0.38), tip.y-11*Math.sin(ang+0.38));
+  ctx.closePath(); ctx.fillStyle = '#ffdd44'; ctx.fill();
+  ctx.beginPath(); ctx.arc(tip.x, tip.y, 7, 0, Math.PI*2);
+  ctx.fillStyle = '#ffdd4466'; ctx.strokeStyle = '#ffdd44'; ctx.lineWidth = 1.5;
+  ctx.fill(); ctx.stroke();
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  drawBgStars();
+  drawStar();
+  for (let p of planets) drawPlanet(p);
+  if (paused) drawPausedOverlay();
+}
+
+function updateInfoPanel() {
+  if (!selectedPlanet) return;
+  const p = selectedPlanet;
+  const v = Math.sqrt(p.vx*p.vx + p.vy*p.vy)/1e3;
+  const dx = (p.px-cx)/SCALE, dy = (p.py-cy)/SCALE;
+  const r = Math.sqrt(dx*dx+dy*dy);
+  const au = r/AU;
+  const period = (2*Math.PI*r)/Math.sqrt(G*starMass/r)/YEAR;
+  document.getElementById('sel-speed').textContent = v.toFixed(1)+' km/s';
+  document.getElementById('sel-dist').textContent = au.toFixed(3)+' AU';
+  document.getElementById('sel-period').textContent = period.toFixed(2)+' yr';
+}
+
+function selectPlanet(p) {
+  selectedPlanet = p;
+  document.getElementById('planet-info').classList.remove('hidden');
+  document.getElementById('hint').textContent = 'Drag the yellow circle at the arrow tip to change velocity direction and speed.';
+  document.getElementById('sel-mass').value = p.mass/EARTH_MASS;
+  document.getElementById('sel-mass-val').textContent = (p.mass/EARTH_MASS).toFixed(1)+' M⊕';
+}
+
+function deselect() {
+  selectedPlanet = null;
+  document.getElementById('planet-info').classList.add('hidden');
+  document.getElementById('hint').textContent = 'Click a planet to select it. Then drag the yellow arrow tip to change its velocity.';
+}
+
+function isNearTip(mx, my, p) {
+  const t = arrowTip(p);
+  return (mx-t.x)**2+(my-t.y)**2 < 200;
+}
+
+pauseBtn.addEventListener('click', () => {
+  paused = !paused;
+  if (paused) {
+    pauseBtn.textContent = '▶ Resume';
+    pauseBtn.className = 'btn resume';
+  } else {
+    pauseBtn.textContent = '⏸ Pause';
+    pauseBtn.className = 'btn pause';
+  }
+});
+
+canvas.addEventListener('mousedown', e => {
+  const m = getMouse(e);
+  if (addMode) {
+    const dx = m.x-cx, dy = m.y-cy;
+    if (Math.sqrt(dx*dx+dy*dy) > 28) {
+      const p = makePlanet(m.x, m.y, selectedColor);
+      planets.push(p); selectPlanet(p);
+    }
+    addMode = false; canvas.style.cursor = 'default'; return;
+  }
+  if (selectedPlanet && isNearTip(m.x, m.y, selectedPlanet)) {
+    draggingArrow = true; canvas.style.cursor = 'grabbing'; return;
+  }
+  let hit = null;
+  for (let p of planets) {
+    const dx = m.x-p.px, dy = m.y-p.py;
+    if (dx*dx+dy*dy < (p.size+10)**2) { hit = p; break; }
+  }
+  if (hit) selectPlanet(hit); else deselect();
+});
+
+canvas.addEventListener('mousemove', e => {
+  const m = getMouse(e);
+  if (draggingArrow && selectedPlanet) {
+    const dx = m.x-selectedPlanet.px, dy = m.y-selectedPlanet.py;
+    const dist = Math.sqrt(dx*dx+dy*dy);
+    if (dist < 1) return;
+    const pdx = (selectedPlanet.px-cx)/SCALE, pdy = (selectedPlanet.py-cy)/SCALE;
+    const r = Math.sqrt(pdx*pdx+pdy*pdy);
+    const vOrb = Math.sqrt(G*starMass/r);
+    const speed = (dist/ARROW_PX)*vOrb;
+    selectedPlanet.vx = (dx/dist)*speed;
+    selectedPlanet.vy = (dy/dist)*speed;
+    canvas.style.cursor = 'grabbing'; return;
+  }
+  if (addMode) { canvas.style.cursor = 'crosshair'; return; }
+  if (selectedPlanet && isNearTip(m.x, m.y, selectedPlanet)) { canvas.style.cursor = 'grab'; return; }
+  let hover = false;
+  for (let p of planets) {
+    const dx = m.x-p.px, dy = m.y-p.py;
+    if (dx*dx+dy*dy < (p.size+10)**2) { hover = true; break; }
+  }
+  canvas.style.cursor = hover ? 'pointer' : 'default';
+});
+
+canvas.addEventListener('mouseup', () => { draggingArrow = false; canvas.style.cursor = 'default'; });
+
+document.getElementById('add-btn').addEventListener('click', () => {
+  addMode = true; canvas.style.cursor = 'crosshair'; deselect();
+  document.getElementById('hint').textContent = 'Click anywhere in space to place the planet.';
+});
+
+document.getElementById('clear-btn').addEventListener('click', () => { planets = []; deselect(); });
+
+document.getElementById('star-mass').addEventListener('input', function() {
+  starMass = parseFloat(this.value)*SOLAR_MASS;
+  document.getElementById('star-mass-val').textContent = parseFloat(this.value).toFixed(1)+' M☉';
+});
+
+document.getElementById('sel-mass').addEventListener('input', function() {
+  if (!selectedPlanet) return;
+  const v = parseFloat(this.value);
+  selectedPlanet.mass = v*EARTH_MASS;
+  selectedPlanet.size = Math.min(14, 5+v*0.45);
+  document.getElementById('sel-mass-val').textContent = v.toFixed(1)+' M⊕';
+});
+
+document.getElementById('delete-btn').addEventListener('click', () => {
+  if (!selectedPlanet) return;
+  planets = planets.filter(p => p !== selectedPlanet); deselect();
+});
+
+document.querySelectorAll('.color-dot').forEach(dot => {
+  dot.addEventListener('click', function() {
+    document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
+    this.classList.add('selected');
+    selectedColor = this.dataset.color;
+  });
+});
+
+window.addEventListener('resize', resize);
+
+function loop() {
+  updatePhysics();
+  draw();
+  updateInfoPanel();
+  requestAnimationFrame(loop);
+}
+loop();
+</script>
