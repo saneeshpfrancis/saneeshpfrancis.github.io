@@ -294,25 +294,20 @@ export const projects: Project[] = [
     period: "2011 – Present",
     description:
       "Amrita's flagship virtual laboratory platform delivering computer-simulated, remote-triggered and interactive animation-based physics experiments — freely accessible over the internet as part of India's national Virtual Labs initiative.",
-    tags: [
-      "Simulations",
-      "Interactive Animations",
-      "Remote Triggered",
-      "Open Access",
-    ],
+    tags: ["Simulations", "Interactive Animations", "Open Access"],
     icon: Atom,
     link: "https://vlab.amrita.edu",
     linkLabel: "vlab.amrita.edu",
     featured: true,
   },
-  {
-    title: "Remote-Triggered Experiments",
-    period: "Ongoing",
-    description:
-      "Real laboratory instruments controllable from anywhere through the browser — for example a dual-axis solar irradiance measurement system — letting students run genuine experiments remotely and analyse live data.",
-    tags: ["Hardware Integration", "Live Data", "IoT"],
-    icon: Radio,
-  },
+  // {
+  //   title: "Remote-Triggered Experiments",
+  //   period: "Ongoing",
+  //   description:
+  //     "Real laboratory instruments controllable from anywhere through the browser — for example a dual-axis solar irradiance measurement system — letting students run genuine experiments remotely and analyse live data.",
+  //   tags: ["Hardware Integration", "Live Data", "IoT"],
+  //   icon: Radio,
+  // },
   {
     title: "VL-LMS — Virtual Lab Learning Management System",
     period: "Ongoing",
