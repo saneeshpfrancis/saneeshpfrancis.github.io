@@ -54,7 +54,7 @@ export const profile = {
   workLocation: "Amritapuri, Kollam",
   email: "saneeshpf@gmail.com",
   languages: ["Malayalam", "English"],
-  cvUrl: "../../public/assets/doc/saneeshpf.pdf",
+  cvUrl: "assets/doc/saneeshpf.pdf",
   /**
    * Optional: set your date of birth as "YYYY-MM-DD" to display your age in the
    * About section (it is calculated automatically). Leave as null to hide it.
