@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nonlinear Simple Pendulum Simulator | Physical Science Laboratory</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ==========================================
+       App Header
+       ========================================== -->
+  <header class="app-header">
+    <div class="header-brand">
+      <div class="brand-icon">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 20px; height: 20px;">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v13m0 0a3 3 0 100 6 3 3 0 000-6z" />
+        </svg>
+      </div>
+      <div>
+        <h1 class="brand-title">
+          Physical Science Pendulum Simulator
+          <span class="badge-degree">Degree Level</span>
+        </h1>
+        <p class="brand-subtitle">Classical Mechanics &bull; Non-linear Dynamics &bull; Computational Integrators</p>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button id="btn-theory-guide" class="btn btn-secondary">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        </svg>
+        Theory & Lab Manual
+      </button>
+    </div>
+  </header>
+
+  <!-- ==========================================
+       Main Workspace Grid
+       ========================================== -->
+  <main class="app-container">
+
+    <!-- LEFT PANEL: CONTROLS & PHYSICAL PARAMETERS -->
+    <aside class="panel left-panel">
+      <div class="panel-header">
+        <h2 class="panel-title">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+          </svg>
+          System Parameters
+        </h2>
+      </div>
+
+      <!-- Section: Geometry & Mass -->
+      <div class="control-section">
+        <div class="section-label">Geometry & Mass</div>
+        
+        <div class="control-group">
+          <label class="control-label" for="input-length">
+            Length (L): <span id="val-length" class="control-val">1.00 m</span>
+          </label>
+          <input type="range" id="input-length" min="0.2" max="3.0" step="0.05" value="1.0">
+        </div>
+
+        <div class="control-group">
+          <label class="control-label" for="input-mass">
+            Bob Mass (m): <span id="val-mass" class="control-val">1.00 kg</span>
+          </label>
+          <input type="range" id="input-mass" min="0.1" max="5.0" step="0.1" value="1.0">
+        </div>
+
+        <div class="control-group">
+          <label class="control-label" for="select-gravity">Gravitational Field (g):</label>
+          <select id="select-gravity">
+            <option value="9.80665" selected>Earth (9.807 m/s²)</option>
+            <option value="1.62">Moon (1.620 m/s²)</option>
+            <option value="3.72">Mars (3.720 m/s²)</option>
+            <option value="24.79">Jupiter (24.79 m/s²)</option>
+            <option value="0.0">Zero-G (0.000 m/s²)</option>
+            <option value="custom">Custom Value...</option>
+          </select>
+          <div style="display: flex; gap: 6px; align-items: center; margin-top: 4px;">
+            <input type="number" id="input-gravity" min="0" max="50" step="0.01" value="9.80665" style="flex: 1;">
+            <span id="val-gravity" class="control-val" style="font-size: 0.76rem;">9.807 m/s²</span>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label class="control-label" for="select-rod-type">Constraint Element:</label>
+          <select id="select-rod-type">
+            <option value="rigid" selected>Rigid Inextensible Rod</option>
+            <option value="string">Flexible String (Can go slack)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Section: Initial Conditions -->
+      <div class="control-section">
+        <div class="section-label">Initial Conditions</div>
+        <div class="control-group">
+          <label class="control-label" for="input-angle">
+            Initial Angle (θ₀): <span id="val-angle" class="control-val">45.0° (0.79 rad)</span>
+          </label>
+          <input type="range" id="input-angle" min="-180" max="180" step="0.5" value="45">
+        </div>
+
+        <div class="control-group">
+          <label class="control-label" for="input-omega">
+            Initial Velocity (ω₀): <span id="val-omega" class="control-val">0.00 rad/s</span>
+          </label>
+          <input type="range" id="input-omega" min="-10" max="10" step="0.1" value="0">
+        </div>
+      </div>
+
+      <!-- Section: Dissipation & Periodic Forcing -->
+      <div class="control-section">
+        <div class="section-label">Dissipation & Drive</div>
+        <div class="control-group">
+          <label class="control-label" for="input-damping">
+            Linear Damping (γ = b/m): <span id="val-damping" class="control-val">0.050 s⁻¹</span>
+          </label>
+          <input type="range" id="input-damping" min="0" max="1.0" step="0.005" value="0.05">
+        </div>
+
+        <div class="control-group">
+          <label class="control-label" for="input-quad-damping">
+            Quadratic Air Drag (c_d): <span id="val-quad-damping" class="control-val">0.0000</span>
+          </label>
+          <input type="range" id="input-quad-damping" min="0" max="0.05" step="0.001" value="0">
+        </div>
+
+        <div class="control-group">
+          <label class="control-label" for="input-drive-amp">
+            Driving Torque (τ₀): <span id="val-drive-amp" class="control-val">0.00 N·m</span>
+          </label>
+          <input type="range" id="input-drive-amp" min="0" max="5.0" step="0.05" value="0">
+        </div>
+
+        <div class="control-group">
+          <label class="control-label" for="input-drive-freq">
+            Drive Freq (Ω): <span id="val-drive-freq" class="control-val">0.667 rad/s</span>
+          </label>
+          <input type="range" id="input-drive-freq" min="0.1" max="10.0" step="0.05" value="0.667">
+        </div>
+      </div>
+
+      <!-- Section: Computational Physics Integrator -->
+      <div class="control-section">
+        <div class="section-label">Numerical Integrator</div>
+        <div class="control-group">
+          <select id="select-integrator">
+            <option value="rk4" selected>Runge-Kutta 4th Order (RK4 - O(dt⁴))</option>
+            <option value="verlet">Velocity-Verlet (Symplectic, O(dt²))</option>
+            <option value="euler-cromer">Euler-Cromer (Semi-Implicit, O(dt))</option>
+            <option value="euler">Forward Euler (Unstable Divergence)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Section: Visual Overlays -->
+      <div class="control-section">
+        <div class="section-label">Visual Diagnostics</div>
+        <div class="toggle-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="chk-vectors" checked> Vectors All
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="chk-velocity" checked> Velocity (v)
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="chk-accel" checked> Accel (a)
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="chk-forces" checked> Forces (mg, T)
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="chk-protractor" checked> Protractor
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="chk-trace" checked> Trajectory
+          </label>
+          <label class="checkbox-label" style="grid-column: span 2;">
+            <input type="checkbox" id="chk-photogate" checked> Photogate Laser Sensor
+          </label>
+        </div>
+      </div>
+    </aside>
+
+    <!-- CENTER PANEL: SIMULATION STAGE -->
+    <section class="stage-panel">
+      <div class="canvas-wrapper">
+        <canvas id="sim-canvas"></canvas>
+        <div class="stage-overlay">
+          <div class="telemetry-pills">
+            <div class="telemetry-pill">Drag Bob with Mouse / Touch</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Playback and Simulation Stepping Toolbar -->
+      <div class="stage-controls">
+        <div class="controls-left">
+          <button id="btn-play-pause" class="btn btn-accent">
+            <svg class="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px;">
+              <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+            </svg>
+            Pause
+          </button>
+          <button id="btn-step" class="btn btn-secondary">
+            <svg class="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px;">
+              <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
+            </svg>
+            Step
+          </button>
+          <button id="btn-reset" class="btn btn-secondary">
+            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px;">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Reset
+          </button>
+        </div>
+
+        <div class="controls-right">
+          <label style="font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+            Speed:
+            <select id="time-scale-select">
+              <option value="0.1">0.10× (Slow-Mo)</option>
+              <option value="0.25">0.25× (Slow-Mo)</option>
+              <option value="0.5">0.50× (Half)</option>
+              <option value="1.0" selected>1.00× (Real-Time)</option>
+              <option value="2.0">2.00× (Fast)</option>
+            </select>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT PANEL: OSCILLOSCOPE, PHASE SPACE & COMPARATIVE METRICS -->
+    <aside class="panel right-panel">
+      <div class="panel-header">
+        <h2 class="panel-title">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          Scientific Oscilloscope
+        </h2>
+      </div>
+
+      <!-- Chart View Mode Tabs -->
+      <div class="chart-tabs">
+        <button class="chart-tab-btn active" data-chart="kinematics">Kinematics</button>
+        <button class="chart-tab-btn" data-chart="energy">Energy &amp; Drift</button>
+        <button class="chart-tab-btn" data-chart="phase">Phase Space</button>
+        <button class="chart-tab-btn" data-chart="fft">FFT Spectrum</button>
+      </div>
+
+      <!-- Oscilloscope Canvas -->
+      <div class="chart-wrapper">
+        <canvas id="chart-canvas"></canvas>
+      </div>
+
+      <!-- Analytical vs. Experimental Period Gauges -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-title">Small-Angle Approx (T₀)</div>
+          <div id="readout-t0" class="metric-val">2.0064 s</div>
+          <div class="metric-sub">T₀ = 2π√(L/g) (Linear)</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-title">Exact Elliptic Period T(θ₀)</div>
+          <div id="readout-exact-t" class="metric-val">2.0837 s</div>
+          <div class="metric-sub">Jacobi 4√(L/g) K(sin θ₀/2)</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-title">Photogate Experimental Period</div>
+          <div id="readout-meas-t" class="metric-val">--</div>
+          <div class="metric-sub">Zero-Crossing Detection</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-title">Nonlinear Period Ratio (T / T₀)</div>
+          <div id="readout-ratio" class="metric-val">1.0385×</div>
+          <div class="metric-sub">Anharmonic lengthening</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-title">Energy Conservation Drift</div>
+          <div id="readout-drift" class="metric-val">+0.000%</div>
+          <div class="metric-sub">ΔE / E₀ relative drift</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-title">Completed Cycles</div>
+          <div id="readout-cycles" class="metric-val">0</div>
+          <div class="metric-sub">Full oscillations counted</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- BOTTOM ROW: PRESET EXPERIMENTS & LAB DATA RECORDER -->
+    <section class="bottom-section">
+      <!-- Laboratory Presets -->
+      <div class="presets-shelf">
+        <span class="presets-label">Undergraduate Lab Presets:</span>
+        <button class="preset-btn" data-preset="shm">1. Small-Angle SHM Limit (θ₀=5°)</button>
+        <button class="preset-btn" data-preset="large-amplitude">2. Large-Angle Anharmonicity (θ₀=90°)</button>
+        <button class="preset-btn" data-preset="separatrix">3. Separatrix &amp; Inverted (θ₀=179.5°)</button>
+        <button class="preset-btn" data-preset="euler-instability">4. Euler Integrator Instability</button>
+        <button class="preset-btn" data-preset="damped">5. Damped Harmonic Oscillator</button>
+        <button class="preset-btn" data-preset="resonance">6. Resonance &amp; Phase Lag</button>
+        <button class="preset-btn" data-preset="chaos">7. Deterministic Chaos</button>
+      </div>
+
+      <!-- Tabular Data Logger -->
+      <div class="data-table-container">
+        <div class="table-header-row">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <h3 style="font-size: 0.95rem; font-weight: 600;">Experimental Data Logger</h3>
+            <span style="font-size: 0.75rem; color: var(--text-muted);">(Real-time instrumentation stream)</span>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button id="btn-toggle-record" class="btn btn-primary btn-sm">
+              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+              </svg>
+              Record Data
+            </button>
+            <button id="btn-export-csv" class="btn btn-secondary btn-sm">
+              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+              </svg>
+              Export CSV
+            </button>
+            <button id="btn-clear-data" class="btn btn-secondary btn-sm">Clear</button>
+          </div>
+        </div>
+
+        <div class="table-scroll">
+          <table id="data-table">
+            <thead>
+              <tr>
+                <th>Time t (s)</th>
+                <th>Angle θ</th>
+                <th>Velocity ω (rad/s)</th>
+                <th>KE (J)</th>
+                <th>PE (J)</th>
+                <th>Total Energy E (J)</th>
+                <th>Tension T (N)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Dynamic Rows inserted here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==========================================
+       Modal: Theory Guide & Student Lab Manual
+       ========================================== -->
+  <div id="modal-theory" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 style="font-size: 1.15rem; font-weight: 700;">Classical Mechanics Laboratory Manual &amp; Theory Guide</h2>
+        <button id="btn-close-modal" class="btn btn-secondary btn-sm">&times; Close</button>
+      </div>
+      <div class="modal-body">
+        
+        <div>
+          <h3>1. Lagrangian Formulation &amp; Non-Linear Equation of Motion</h3>
+          <p>
+            Consider a point mass \(m\) suspended by a massless rigid rod of length \(L\) under uniform gravitational acceleration \(g\).
+            Choosing the generalized coordinate as the deflection angle \(\theta\) from vertical equilibrium:
+          </p>
+          <div class="math-formula">
+            T = \frac{1}{2} m L^2 \dot{\theta}^2, \quad V = m g L (1 - \cos\theta)
+          </div>
+          <p>The Lagrangian \(\mathcal{L} = T - V\) yields the Euler-Lagrange equation:</p>
+          <div class="math-formula">
+            \frac{d}{dt}\left(\frac{\partial \mathcal{L}}{\partial \dot{\theta}}\right) - \frac{\partial \mathcal{L}}{\partial \theta} = 0 \implies \ddot{\theta} + \frac{g}{L} \sin\theta = 0
+          </div>
+          <p>
+            Under linear viscous damping \(\gamma = b/m\) and external harmonic driving torque \(\tau(t) = \tau_0 \cos(\Omega t)\):
+          </p>
+          <div class="math-formula">
+            \ddot{\theta} + \gamma \dot{\theta} + \frac{g}{L} \sin\theta = \frac{\tau_0}{m L^2} \cos(\Omega t)
+          </div>
+        </div>
+
+        <div>
+          <h3>2. Exact Large-Amplitude Period via Jacobi Elliptic Integrals</h3>
+          <p>
+            For initial release from rest at angle \(\theta_0\), conservation of energy gives:
+          </p>
+          <div class="math-formula">
+            \frac{1}{2} m L^2 \dot{\theta}^2 + mgL(1 - \cos\theta) = mgL(1 - \cos\theta_0)
+          </div>
+          <p>
+            Integrating over a quarter period and substituting \(k = \sin(\theta_0 / 2)\) leads to the Complete Elliptic Integral of the First Kind \(K(k)\):
+          </p>
+          <div class="math-formula">
+            T(\theta_0) = 4 \sqrt{\frac{L}{g}} \int_0^{\pi/2} \frac{d\phi}{\sqrt{1 - k^2 \sin^2\phi}} = 4 \sqrt{\frac{L}{g}} K(k)
+          </div>
+          <p>
+            Expanding in Taylor series gives Borda's formula:
+          </p>
+          <div class="math-formula">
+            T \approx 2\pi\sqrt{\frac{L}{g}} \left(1 + \frac{1}{16}\theta_0^2 + \frac{11}{3072}\theta_0^4 + \mathcal{O}(\theta_0^6)\right)
+          </div>
+        </div>
+
+        <div>
+          <h3>3. Phase Space &amp; Separatrix Dynamics</h3>
+          <p>
+            The total energy of the unforced, undamped pendulum is:
+          </p>
+          <div class="math-formula">
+            E = \frac{1}{2} m L^2 \omega^2 + mgL(1 - \cos\theta)
+          </div>
+          <p>
+            When \(E &lt; 2mgL\), trajectories are closed closed loops corresponding to bounded libration (oscillations).
+            When \(E &gt; 2mgL\), trajectories do not cross zero velocity and represent continuous revolution (rotations).
+            The boundary between both regimes is called the <strong>Separatrix</strong>, corresponding to \(E = 2mgL\):
+          </p>
+          <div class="math-formula">
+            \omega_{\text{sep}}(\theta) = \pm 2 \sqrt{\frac{g}{L}} \cos\left(\frac{\theta}{2}\right)
+          </div>
+        </div>
+
+        <div>
+          <h3>4. Computational Physics: Symplectic vs. Non-Symplectic Integrators</h3>
+          <p>
+            <strong>Forward Euler:</strong> Generates artificial positive energy drift proportional to \(\Delta t\), causing unphysical spiral divergence.<br>
+            <strong>Velocity-Verlet &amp; Euler-Cromer:</strong> Symplectic integrators that preserve phase space volume (Liouville's theorem), keeping total energy bounded over millions of steps.<br>
+            <strong>Runge-Kutta 4th Order (RK4):</strong> High local accuracy \(\mathcal{O}(\Delta t^5)\), widely used for precision trajectory integration.
+          </p>
+        </div>
+
+        <div>
+          <h3>5. Undergraduate Laboratory Exercises</h3>
+          <div class="lab-task" style="margin-bottom: 8px;">
+            <strong>Exercise 1: Anharmonic Period Lengthening</strong><br>
+            Set \(L = 1.0\text{ m}\). Vary initial angle \(\theta_0\) from \(10^\circ, 30^\circ, 60^\circ, 90^\circ, 120^\circ, 150^\circ\).
+            Record measured photogate period \(T_{\text{meas}}\). Plot \(T / T_0\) versus \(\theta_0\) and compare against the AGM elliptic integral curve.
+          </div>
+          <div class="lab-task" style="margin-bottom: 8px;">
+            <strong>Exercise 2: Numerical Energy Drift Comparison</strong><br>
+            Release with \(\theta_0 = 45^\circ\), zero damping. Switch between Forward Euler, Euler-Cromer, Verlet, and RK4.
+            Observe the Energy tab and record \(\Delta E / E_0\) after 100 oscillations. Explain why symplectic integrators are required for long-term orbital mechanics.
+          </div>
+          <div class="lab-task">
+            <strong>Exercise 3: Non-Linear Harmonic Generation in FFT</strong><br>
+            Release with \(\theta_0 = 5^\circ\) (linear) and inspect the FFT spectrum. Note the single peak at \(f_0\).
+            Now release from \(\theta_0 = 120^\circ\) and observe the emergence of the 3rd and 5th odd harmonics (\(3f_0, 5f_0\)) resulting from \(\sin\theta \approx \theta - \theta^3/6\).
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="physics.js"></script>
+  <script src="renderer.js"></script>
+  <script src="charts.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

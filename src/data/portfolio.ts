@@ -9,7 +9,6 @@ import {
   Mail,
   Microscope,
   Presentation,
-  Radio,
 } from "lucide-react";
 import {
   GitHubIcon,
@@ -333,6 +332,8 @@ export type Publication = {
   type: "Journal" | "Conference";
   authors: string;
   publisher: string;
+  doi?: string;
+  url?: string;
 };
 
 export const publications: Publication[] = [
