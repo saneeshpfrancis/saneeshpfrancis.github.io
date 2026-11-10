@@ -150,24 +150,26 @@ export function SimulationViewer({ simulation, onBack }: SimulationViewerProps) 
 
       {/* Interactive Guidance Bar */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          {
-            title: "Interactive Drag",
-            desc: "Click and drag the pendulum bob in the canvas to set initial angle θ₀.",
-          },
-          {
-            title: "Integrator Benchmark",
-            desc: "Switch between Forward Euler, Euler-Cromer, Verlet, and RK4 to view energy drift.",
-          },
-          {
-            title: "Phase Space Flow",
-            desc: "View libration vs unbounded rotation across the Separatrix boundary.",
-          },
-          {
-            title: "FFT Harmonic Spectrum",
-            desc: "Observe odd non-linear harmonic generation (3f₀, 5f₀) at large amplitudes.",
-          },
-        ].map((item, idx) => (
+        {(
+          simulation.guidanceTips ?? [
+            {
+              title: "Interactive Controls",
+              desc: "Adjust initial physical conditions directly on the canvas or using parameter sliders.",
+            },
+            {
+              title: "Integrator Benchmarks",
+              desc: "Benchmark numerical integrators and observe system energy conservation.",
+            },
+            {
+              title: "Real-Time Telemetry",
+              desc: "Monitor live kinematics and dynamic force/velocity vectors.",
+            },
+            {
+              title: "Data Logging",
+              desc: "Export real-time experimental data to CSV for quantitative analysis.",
+            },
+          ]
+        ).map((item, idx) => (
           <div
             key={idx}
             className="rounded-xl border border-border/70 bg-card/60 p-3.5 text-xs shadow-xs"
@@ -195,7 +197,7 @@ export function SimulationViewer({ simulation, onBack }: SimulationViewerProps) 
                     Theory & Undergraduate Laboratory Manual
                   </h3>
                   <p className="text-xs text-muted-foreground">
-                    {simulation.title} · Classical Mechanics
+                    {simulation.title} · {simulation.category}
                   </p>
                 </div>
               </div>
@@ -210,21 +212,32 @@ export function SimulationViewer({ simulation, onBack }: SimulationViewerProps) 
 
             <div className="mt-6 space-y-6 text-sm text-foreground/90">
               {/* Theoretical Summary */}
-              <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-2">
-                <h4 className="font-display text-sm font-bold text-primary">
-                  1. Mathematical & Theoretical Rigor
-                </h4>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  The exact non-linear equation of motion:
-                </p>
-                <div className="rounded-lg bg-background/80 p-2.5 font-mono text-xs text-center border border-border">
-                  d²θ/dt² + γ(dθ/dt) + c_quad(dθ/dt)|dθ/dt|L + (g/L)sin(θ) = τ_drive(t)/(mL²)
+              {simulation.theory ? (
+                <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-2">
+                  <h4 className="font-display text-sm font-bold text-primary">
+                    1. {simulation.theory.title}
+                  </h4>
+                  <div className="rounded-lg bg-background/80 p-2.5 font-mono text-xs text-center border border-border overflow-x-auto">
+                    {simulation.theory.equation}
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {simulation.theory.notes}
+                  </p>
                 </div>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Exact Period via Arithmetic-Geometric Mean (AGM): T(θ₀) = 4√(L/g) K(sin(θ₀/2)).
-                  Separatrix Boundary: ω_sep(θ) = ±2√(g/L) cos(θ/2).
-                </p>
-              </div>
+              ) : (
+                <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-2">
+                  <h4 className="font-display text-sm font-bold text-primary">
+                    1. Mathematical & Theoretical Rigor
+                  </h4>
+                  <div className="rounded-lg bg-background/80 p-2.5 font-mono text-xs text-center border border-border">
+                    d²θ/dt² + γ(dθ/dt) + c_quad(dθ/dt)|dθ/dt|L + (g/L)sin(θ) = τ_drive(t)/(mL²)
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Exact Period via Arithmetic-Geometric Mean (AGM): T(θ₀) = 4√(L/g) K(sin(θ₀/2)).
+                    Separatrix Boundary: ω_sep(θ) = ±2√(g/L) cos(θ/2).
+                  </p>
+                </div>
+              )}
 
               {/* Lab Exercises */}
               <div className="space-y-4">

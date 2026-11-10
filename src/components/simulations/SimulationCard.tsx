@@ -92,13 +92,24 @@ export function SimulationCard({ simulation, onLaunch }: SimulationCardProps) {
 
         {/* Right Column: Interactive Animated Preview */}
         <div className="relative flex flex-col items-center justify-center rounded-2xl border border-border/70 bg-background/50 p-6 shadow-inner">
-          <PendulumGraphicPreview />
+          {simulation.id === "projectile_motion" ? (
+            <ProjectileGraphicPreview />
+          ) : (
+            <PendulumGraphicPreview />
+          )}
 
           <div className="mt-4 flex w-full justify-between items-center text-[11px] text-muted-foreground border-t border-border/50 pt-3">
             <span className="flex items-center gap-1 font-mono">
-              <Layers className="h-3 w-3 text-primary" /> RK4 & Verlet
+              <Layers className="h-3 w-3 text-primary" />
+              {simulation.id === "projectile_motion"
+                ? "RK4 · Euler · Cromer"
+                : "RK4 & Verlet"}
             </span>
-            <span className="font-mono">AGM Precision: 10⁻¹⁵</span>
+            <span className="font-mono">
+              {simulation.id === "projectile_motion"
+                ? "Drag & Magnus Lift"
+                : "AGM Precision: 10⁻¹⁵"}
+            </span>
           </div>
         </div>
       </div>
@@ -315,6 +326,137 @@ function PendulumGraphicPreview() {
           fontFamily="monospace"
         >
           Photogate Beam
+        </text>
+      </svg>
+    </div>
+  );
+}
+
+/** Animated SVG visualization of the projectile motion for the card preview */
+function ProjectileGraphicPreview() {
+  return (
+    <div className="w-full max-w-[280px] h-[220px] flex items-center justify-center relative">
+      <svg
+        viewBox="0 0 280 220"
+        className="w-full h-full overflow-visible"
+        aria-hidden="true"
+      >
+        <defs>
+          <linearGradient id="traj-grad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#38bdf8" />
+            <stop offset="50%" stopColor="#818cf8" />
+            <stop offset="100%" stopColor="#f43f5e" />
+          </linearGradient>
+          <radialGradient id="cannonball-grad" cx="35%" cy="35%" r="65%">
+            <stop offset="0%" stopColor="#fb7185" />
+            <stop offset="100%" stopColor="#e11d48" />
+          </radialGradient>
+          <filter id="ball-glow" x="-30%" y="-30%" width="160%" height="160%">
+            <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#f43f5e" floodOpacity="0.6" />
+          </filter>
+        </defs>
+
+        {/* Coordinate Grid Lines */}
+        {[50, 90, 130, 170].map((y) => (
+          <line
+            key={y}
+            x1="20"
+            y1={y}
+            x2="265"
+            y2={y}
+            stroke="var(--border)"
+            strokeWidth="0.8"
+            strokeDasharray="3 3"
+            opacity="0.6"
+          />
+        ))}
+        {[60, 110, 160, 210].map((x) => (
+          <line
+            key={x}
+            x1={x}
+            y1="40"
+            x2={x}
+            y2="175"
+            stroke="var(--border)"
+            strokeWidth="0.8"
+            strokeDasharray="3 3"
+            opacity="0.6"
+          />
+        ))}
+
+        {/* Ground level */}
+        <line x1="15" y1="175" x2="265" y2="175" stroke="var(--border)" strokeWidth="2" />
+        {/* Ground tick marks */}
+        {[30, 70, 110, 150, 190, 230].map((x) => (
+          <line key={x} x1={x} y1="175" x2={x - 6} y2="182" stroke="var(--border)" strokeWidth="1" opacity="0.5" />
+        ))}
+
+        {/* Theoretical Parabolic Trajectory */}
+        <path
+          d="M 35 155 Q 125 35 225 175"
+          fill="none"
+          stroke="url(#traj-grad)"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeDasharray="4 3"
+          opacity="0.85"
+        />
+
+        {/* Apex Indicator Line & Dot */}
+        <line x1="125" y1="95" x2="125" y2="175" stroke="#818cf8" strokeWidth="1" strokeDasharray="2 2" opacity="0.7" />
+        <circle cx="125" cy="95" r="3" fill="#818cf8" />
+        <text x="125" y="85" textAnchor="middle" fontSize="9" fill="#818cf8" fontFamily="monospace">
+          Apex H_max
+        </text>
+
+        {/* Animated Projectile Ball along path */}
+        <path
+          id="ball-path"
+          d="M 35 155 Q 125 35 225 175"
+          fill="none"
+          stroke="none"
+        />
+        <circle r="6" fill="url(#cannonball-grad)" filter="url(#ball-glow)">
+          <animateMotion
+            dur="2.4s"
+            repeatCount="indefinite"
+            path="M 35 155 Q 125 35 225 175"
+            keyTimes="0; 0.9; 1"
+            keyPoints="0; 1; 1"
+          />
+          <animate
+            attributeName="opacity"
+            values="1; 1; 0; 0; 1"
+            keyTimes="0; 0.88; 0.92; 0.98; 1"
+            dur="2.4s"
+            repeatCount="indefinite"
+          />
+        </circle>
+
+        {/* Cannon & Mount at (35, 155) */}
+        {/* Cannon Pedestal */}
+        <rect x="25" y="155" width="20" height="20" rx="2" fill="var(--muted)" stroke="var(--border)" strokeWidth="1" />
+        {/* Barrel pointing at ~45 deg */}
+        <g transform="translate(35, 155) rotate(-42)">
+          <rect x="-4" y="-22" width="10" height="24" rx="2" fill="var(--primary)" />
+          <rect x="-5" y="-23" width="12" height="4" rx="1" fill="var(--accent)" />
+        </g>
+        {/* Cannon Pivot wheel */}
+        <circle cx="35" cy="155" r="5" fill="var(--border)" stroke="var(--primary)" strokeWidth="1.5" />
+
+        {/* Initial Velocity Vector Arrow */}
+        <line x1="35" y1="155" x2="65" y2="125" stroke="#10b981" strokeWidth="2" strokeLinecap="round" />
+        <polygon points="65,123 68,129 61,127" fill="#10b981" />
+        <text x="56" y="118" fontSize="8" fill="#10b981" fontFamily="monospace" fontWeight="bold">
+          v₀
+        </text>
+
+        {/* Target Bullseye on Ground at x=225 */}
+        <ellipse cx="225" cy="175" rx="14" ry="4" fill="none" stroke="#f43f5e" strokeWidth="1.5" />
+        <ellipse cx="225" cy="175" rx="8" ry="2.2" fill="none" stroke="#f43f5e" strokeWidth="1.2" />
+        <circle cx="225" cy="175" r="2" fill="#f43f5e" />
+        <text x="225" y="195" textAnchor="middle" fontSize="9" fill="var(--muted-foreground)" fontFamily="monospace">
+          Target R
         </text>
       </svg>
     </div>

@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projectile Motion Physics Science Lab Simulation</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/lab.css">
+</head>
+<body>
+    <!-- App Header -->
+    <header class="app-header">
+        <div class="brand">
+            <span class="brand-icon">🚀</span>
+            <div>
+                <h1>Projectile Motion Lab</h1>
+            </div>
+            <span class="brand-badge">PHYSICS SIM v2.0</span>
+        </div>
+
+        <!-- Level Selector Navigation -->
+        <nav class="level-nav">
+            <button class="level-tab active" data-level="basic">
+                <span>🟢</span> 1. Basic Level
+            </button>
+            <button class="level-tab" data-level="intermediate">
+                <span>🟡</span> 2. Intermediate
+            </button>
+            <button class="level-tab" data-level="advance">
+                <span>🟣</span> 3. Advance Level
+            </button>
+            <button class="level-tab" data-level="challenges">
+                <span>🏆</span> 4. Labs & Challenges
+            </button>
+        </nav>
+
+        <div class="header-actions">
+            <label class="toggle-item" title="Audio Sound Effects">
+                <input type="checkbox" id="toggle-sound" checked>
+                <span>🔊 Sound</span>
+            </label>
+            <button id="btn-fit-view" class="btn btn-sm" title="Fit Camera to Trajectory">
+                <span>🔍</span> Fit View
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace Grid -->
+    <main class="main-container">
+        <!-- Left Section: Simulation Canvas & HUD -->
+        <section class="sim-section">
+            <div class="canvas-wrapper">
+                <canvas id="sim-canvas"></canvas>
+
+                <!-- Floating Scientific Telemetry HUD -->
+                <div class="hud-bar">
+                    <div class="hud-pill-group">
+                        <div class="hud-item">
+                            <span class="hud-label">Time (t)</span>
+                            <span id="hud-time" class="hud-val">0.00 s</span>
+                        </div>
+                        <div class="hud-item">
+                            <span class="hud-label">Distance (x)</span>
+                            <span id="hud-x" class="hud-val">0.00 m</span>
+                        </div>
+                        <div class="hud-item">
+                            <span class="hud-label">Altitude (y)</span>
+                            <span id="hud-y" class="hud-val alt">0.00 m</span>
+                        </div>
+                    </div>
+
+                    <div class="hud-pill-group">
+                        <div class="hud-item">
+                            <span class="hud-label">Speed (|v|)</span>
+                            <span id="hud-speed" class="hud-val speed">20.00 m/s</span>
+                        </div>
+                        <div class="hud-item">
+                            <span class="hud-label">Kinetic (KE)</span>
+                            <span id="hud-ke" class="hud-val energy">0.0 J</span>
+                        </div>
+                        <div class="hud-item">
+                            <span class="hud-label">Potential (PE)</span>
+                            <span id="hud-pe" class="hud-val energy">0.0 J</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- On-screen Interaction Hint -->
+                <div class="canvas-controls-hint">
+                    💡 Drag cannon barrel to aim • Drag pedestal to elevate • Drag target/calipers • Scroll wheel to zoom
+                </div>
+            </div>
+
+            <!-- Simulation Controls Toolbar -->
+            <div class="sim-toolbar">
+                <div class="btn-group">
+                    <button id="btn-fire" class="btn btn-fire">
+                        <span>🔥</span> FIRE
+                    </button>
+                    <button id="btn-play-pause" class="btn">
+                        <span>⏸️</span> Pause
+                    </button>
+                    <button id="btn-step" class="btn btn-sm" title="Step forward 1 frame">
+                        <span>⏭️</span> Step
+                    </button>
+                    <button id="btn-reset" class="btn btn-sm">
+                        <span>🔄</span> Reset
+                    </button>
+                    <button id="btn-clear-trails" class="btn btn-sm" title="Clear ghost flight paths">
+                        <span>🧹</span> Clear Trails
+                    </button>
+                </div>
+
+                <!-- Slow-Mo & Playback Speed -->
+                <div class="btn-group">
+                    <span style="font-size:0.75rem; color:var(--text-secondary); margin-right:4px;">Speed:</span>
+                    <div class="speed-selector">
+                        <button class="btn-sim-speed" data-speed="0.1">0.1x</button>
+                        <button class="btn-sim-speed" data-speed="0.5">0.5x</button>
+                        <button class="btn-sim-speed active" data-speed="1.0">1.0x</button>
+                        <button class="btn-sim-speed" data-speed="2.0">2.0x</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Telemetry & Live Multi-Channel Graphing -->
+            <div class="deck-card">
+                <div class="card-title">
+                    <span>📊 Real-Time Telemetry & Graphing</span>
+                    <div class="graph-nav">
+                        <button class="graph-tab active" data-mode="position">Position x(t), y(t)</button>
+                        <button class="graph-tab" data-mode="velocity">Velocity vx, vy, |v|</button>
+                        <button class="graph-tab" data-mode="energy">Energy KE, PE, Total</button>
+                    </div>
+                </div>
+                <div class="graph-wrapper">
+                    <canvas id="graph-canvas"></canvas>
+                </div>
+            </div>
+
+            <!-- Experimental Data Logging Table -->
+            <div class="deck-card">
+                <div class="card-title">
+                    <span>📋 Science Experiment Trials Log</span>
+                    <button id="btn-export-csv" class="btn btn-sm btn-primary">
+                        <span>📥</span> Export CSV
+                    </button>
+                </div>
+                <div class="table-wrapper">
+                    <table class="lab-table">
+                        <thead>
+                            <tr>
+                                <th>Trial</th>
+                                <th>Angle</th>
+                                <th>Speed</th>
+                                <th>Height</th>
+                                <th>Environment</th>
+                                <th>Range</th>
+                                <th>Time</th>
+                                <th>Impact Speed</th>
+                                <th>Target Hit</th>
+                            </tr>
+                        </thead>
+                        <tbody id="trials-tbody">
+                            <tr>
+                                <td colspan="9" style="text-align:center; color:#64748b; padding:18px;">
+                                    No trials logged yet. Fire the cannon to record data points!
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Section: Parameter Control Deck & Science Lab -->
+        <aside class="deck-section">
+            <!-- 1. Launch Parameters (Always Active) -->
+            <div class="deck-card main-controls">
+                <div class="card-title">
+                    <span>🎛️ Launch Parameters</span>
+                </div>
+
+                <!-- Launch Speed -->
+                <div class="control-row">
+                    <div class="control-label">
+                        <span>Initial Speed (v₀)</span>
+                        <span id="val-speed" class="control-val">20.0 m/s</span>
+                    </div>
+                    <div class="range-with-input">
+                        <input type="range" id="speed-slider" class="range-slider" min="1" max="80" step="0.5" value="20">
+                        <input type="number" id="speed-input" class="num-input" min="1" max="150" step="0.5" value="20">
+                    </div>
+                </div>
+
+                <!-- Launch Angle -->
+                <div class="control-row">
+                    <div class="control-label">
+                        <span>Launch Angle (θ)</span>
+                        <span id="val-angle" class="control-val">45.0°</span>
+                    </div>
+                    <div class="range-with-input">
+                        <input type="range" id="angle-slider" class="range-slider" min="0" max="90" step="0.5" value="45">
+                        <input type="number" id="angle-input" class="num-input" min="0" max="90" step="0.5" value="45">
+                    </div>
+                </div>
+
+                <!-- Launch Height -->
+                <div class="control-row">
+                    <div class="control-label">
+                        <span>Launch Height (h₀)</span>
+                        <span id="val-height" class="control-val">0.0 m</span>
+                    </div>
+                    <div class="range-with-input">
+                        <input type="range" id="height-slider" class="range-slider" min="0" max="30" step="0.5" value="0">
+                        <input type="number" id="height-input" class="num-input" min="0" max="30" step="0.5" value="0">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Intermediate Level Controls (Celestial & Projectile Presets) -->
+            <div class="deck-card intermediate-only" style="display:none;">
+                <div class="card-title">
+                    <span>🪐 Celestial Environment & Gravity</span>
+                </div>
+                <div class="control-row">
+                    <label class="control-label">Celestial Body</label>
+                    <select id="planet-select" class="select-input">
+                        <option value="earth">🌍 Earth (g = 9.81 m/s²)</option>
+                        <option value="moon">🌑 Moon (g = 1.62 m/s²)</option>
+                        <option value="mars">🪐 Mars (g = 3.72 m/s²)</option>
+                        <option value="jupiter">🌕 Jupiter (g = 24.79 m/s²)</option>
+                        <option value="vacuumEarth">🧪 Earth Vacuum Chamber (0 kg/m³)</option>
+                        <option value="custom">🎛️ Custom Environment</option>
+                    </select>
+                </div>
+                <div class="control-row">
+                    <div class="control-label">
+                        <span>Gravity Acceleration (g)</span>
+                        <span id="val-gravity" class="control-val">9.81 m/s²</span>
+                    </div>
+                    <input type="range" id="gravity-slider" class="range-slider" min="0.5" max="30" step="0.1" value="9.81">
+                </div>
+
+                <div class="control-row" style="margin-top:14px;">
+                    <label class="control-label">Projectile Body Preset</label>
+                    <select id="projectile-select" class="select-input">
+                        <option value="cannonball">💣 Cannonball (5.0 kg, 0.15m)</option>
+                        <option value="baseball">⚾ Baseball (0.145 kg, 0.074m)</option>
+                        <option value="golfball">⛳ Golf Ball (0.046 kg, 0.043m)</option>
+                        <option value="tennisball">🎾 Tennis Ball (0.057 kg, 0.067m)</option>
+                        <option value="bowlingball">🎳 Bowling Ball (7.0 kg, 0.22m)</option>
+                        <option value="football">🏈 Football (0.42 kg, 0.18m)</option>
+                        <option value="bullet">🎯 Rifle Bullet (0.010 kg, 0.009m)</option>
+                        <option value="feather">🪶 Feather / Chute (High Drag, 0.005 kg)</option>
+                        <option value="custom">⚙️ Custom Projectile (User defined)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 3. Advanced Level Controls (Aerodynamics & Numerical Solvers) -->
+            <div class="deck-card advance-only" style="display:none;">
+                <div class="card-title">
+                    <span>💨 Aerodynamics & Computational Physics</span>
+                </div>
+
+                <!-- Custom projectile physical properties -->
+                <div class="control-row">
+                    <div class="control-label">
+                        <span>Custom Mass (m)</span>
+                    </div>
+                    <div class="range-with-input">
+                        <input type="number" id="custom-mass" class="num-input" style="width:100%; text-align:left;" min="0.001" max="100" step="0.05" value="5.0" title="Mass in kg">
+                        <span style="font-size:0.75rem; color:#94a3b8;">kg</span>
+                    </div>
+                </div>
+
+                <div class="control-row">
+                    <div class="control-label">
+                        <span>Diameter (d)</span>
+                    </div>
+                    <div class="range-with-input">
+                        <input type="number" id="custom-diameter" class="num-input" style="width:100%; text-align:left;" min="0.005" max="2.0" step="0.01" value="0.15" title="Diameter in meters">
+                        <span style="font-size:0.75rem; color:#94a3b8;">m</span>
+                    </div>
+                </div>
+
+                <div class="control-row">
+                    <div class="control-label">
+                        <span>Drag Coefficient (Cd)</span>
+                    </div>
+                    <div class="range-with-input">
+                        <input type="number" id="custom-drag" class="num-input" style="width:100%; text-align:left;" min="0.01" max="2.5" step="0.01" value="0.47" title="Drag coefficient (0.47 for sphere)">
+                    </div>
+                </div>
+
+                <!-- Drag Toggle -->
+                <div class="control-row">
+                    <label class="toggle-item" style="font-weight:600; color:#38bdf8;">
+                        <input type="checkbox" id="toggle-drag">
+                        <span>Enable Quadratic Air Resistance (F_drag)</span>
+                    </label>
+                </div>
+
+                <!-- Air Density -->
+                <div class="control-row">
+                    <div class="control-label">
+                        <span>Air Density (ρ)</span>
+                        <span id="val-density" class="control-val">1.225 kg/m³</span>
+                    </div>
+                    <input type="range" id="density-slider" class="range-slider" min="0" max="3.0" step="0.025" value="1.225">
+                </div>
+
+                <!-- Wind Speed -->
+                <div class="control-row">
+                    <div class="control-label">
+                        <span>Horizontal Wind Speed (v_wind)</span>
+                        <span id="val-wind" class="control-val">0.0 m/s</span>
+                    </div>
+                    <input type="range" id="wind-slider" class="range-slider" min="-25" max="25" step="0.5" value="0">
+                </div>
+
+                <!-- Magnus Spin -->
+                <div class="control-row">
+                    <div class="control-label">
+                        <span>Magnus Spin Rate (ω) [Backspin/Topspin]</span>
+                        <span id="val-spin" class="control-val">0.0 rad/s</span>
+                    </div>
+                    <input type="range" id="spin-slider" class="range-slider" min="-120" max="120" step="5" value="0">
+                </div>
+
+                <!-- Integrator Solver -->
+                <div class="control-row">
+                    <label class="control-label">Numerical Integrator</label>
+                    <select id="solver-select" class="select-input">
+                        <option value="rk4">Runge-Kutta 4th Order (RK4 - Aerospace standard)</option>
+                        <option value="euler-cromer">Euler-Cromer (Symplectic semi-implicit)</option>
+                        <option value="euler">Forward Euler (1st Order - demonstrates energy drift)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Scientific Instruments & Vector Overlays -->
+            <div class="deck-card">
+                <div class="card-title">
+                    <span>📏 Scientific Instruments & Vectors</span>
+                </div>
+                <div class="toggle-grid">
+                    <label class="toggle-item">
+                        <input type="checkbox" id="toggle-tape">
+                        <span>📐 Tape Measure</span>
+                    </label>
+                    <label class="toggle-item">
+                        <input type="checkbox" id="toggle-wall">
+                        <span>🧱 Obstacle Wall</span>
+                    </label>
+                    <label class="toggle-item">
+                        <input type="checkbox" id="toggle-photogate1">
+                        <span>⏱️ Photogate 1</span>
+                    </label>
+                    <label class="toggle-item">
+                        <input type="checkbox" id="toggle-photogate2">
+                        <span>⏱️ Photogate 2</span>
+                    </label>
+                    <label class="toggle-item">
+                        <input type="checkbox" id="toggle-vec-v" checked>
+                        <span>🟩 Velocity Vector</span>
+                    </label>
+                    <label class="toggle-item">
+                        <input type="checkbox" id="toggle-vec-vcomp" checked>
+                        <span>🟩 Vx & Vy Components</span>
+                    </label>
+                    <label class="toggle-item">
+                        <input type="checkbox" id="toggle-vec-a" checked>
+                        <span>🟧 Acceleration Vector</span>
+                    </label>
+                    <label class="toggle-item">
+                        <input type="checkbox" id="toggle-vec-drag" checked>
+                        <span>🟥 Drag Force Vector</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Theoretical Kinematic Predictions -->
+            <div class="deck-card">
+                <div class="card-title">
+                    <span>📐 Theoretical Predictions (Vacuum)</span>
+                </div>
+                <div class="prediction-grid">
+                    <div class="pred-box">
+                        <div class="pred-title">Total Range (R)</div>
+                        <div id="pred-range" class="pred-value">40.77 m</div>
+                    </div>
+                    <div class="pred-box">
+                        <div class="pred-title">Max Height (H_max)</div>
+                        <div id="pred-height" class="pred-value">10.19 m</div>
+                    </div>
+                    <div class="pred-box">
+                        <div class="pred-title">Flight Time (T)</div>
+                        <div id="pred-time" class="pred-value">2.88 s</div>
+                    </div>
+                    <div class="pred-box">
+                        <div class="pred-title">Optimal Launch Angle</div>
+                        <div id="pred-optimal" class="pred-value">45.0°</div>
+                    </div>
+                    <div class="pred-box" style="grid-column: span 2;">
+                        <div class="pred-title">Impact Velocity & Angle</div>
+                        <div id="pred-vimpact" class="pred-value">20.00 m/s (45.0°)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Guided Experiments & Challenge Scenarios (Tab 4) -->
+            <div class="deck-card challenges-panel" style="display:none;">
+                <div class="card-title">
+                    <span>🔬 Guided Physics Experiments</span>
+                </div>
+                <div id="experiments-list" class="experiments-grid"></div>
+
+                <!-- Experiment Detail Container -->
+                <div class="exp-detail-box">
+                    <div class="exp-detail-header">
+                        <h4 id="exp-detail-title" class="exp-detail-title">Lab Title</h4>
+                        <button id="btn-apply-exp-setup" class="btn btn-sm btn-primary">
+                            <span>🚀</span> Run Experiment
+                        </button>
+                    </div>
+                    <div class="exp-section-title">Objectives:</div>
+                    <ul id="exp-detail-objectives" class="exp-list"></ul>
+                    <div class="exp-section-title">Procedure:</div>
+                    <ol id="exp-detail-procedure" class="exp-list"></ol>
+                    <div class="exp-section-title">Scientific Theory:</div>
+                    <p id="exp-detail-theory" class="exp-theory-box"></p>
+                </div>
+
+                <!-- Gamified Target Challenges -->
+                <div class="card-title" style="margin-top:14px;">
+                    <span>🎯 Physics Target Challenges</span>
+                </div>
+                <div id="challenges-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+            </div>
+        </aside>
+    </main>
+
+    <!-- Main JavaScript App Entry Point -->
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>

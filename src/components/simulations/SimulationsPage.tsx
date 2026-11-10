@@ -160,9 +160,9 @@ export function SimulationsPage({
                 </h1>
 
                 <p className="text-base leading-relaxed text-muted-foreground md:text-lg">
-                  Explore degree-level computational physics simulations, non-linear dynamics,
+                  Explore degree-level computational physics simulations, atmospheric aerodynamics, non-linear dynamics,
                   and numerical integrator benchmarks. Designed with high mathematical precision,
-                  real-time vector visualizations, phase space analysis, and undergraduate laboratory exercises.
+                  real-time vector visualizations, phase space analysis, and guided undergraduate laboratory exercises.
                 </p>
 
                 {/* Quick Highlights badges */}
@@ -173,6 +173,10 @@ export function SimulationsPage({
                   </span>
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/80 px-3 py-1 text-xs font-medium text-foreground">
                     <Atom className="h-3.5 w-3.5 text-accent" />
+                    Atmospheric Drag & Magnus Aerodynamic Lift
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/80 px-3 py-1 text-xs font-medium text-foreground">
+                    <Atom className="h-3.5 w-3.5 text-emerald-500" />
                     Exact AGM Elliptic Periods
                   </span>
                 </div>

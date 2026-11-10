@@ -161,23 +161,26 @@ export function Projects({ onNavigateToSimulations }: ProjectsProps) {
                 </h3>
 
                 <p className="text-sm leading-relaxed text-muted-foreground md:text-base">
-                  Explore degree-level computational physics simulations, large-amplitude nonlinear dynamics,
-                  symplectic integrator benchmarking (RK4, Velocity-Verlet, Euler-Cromer), phase space separatrices,
-                  and live FFT spectra.
+                  Explore degree-level computational physics simulations: large-amplitude nonlinear pendulum dynamics,
+                  multilevel projectile motion with aerodynamic drag and Magnus lift, symplectic integrator benchmarking
+                  (RK4, Velocity-Verlet, Euler-Cromer), phase space separatrices, and live data telemetry.
                 </p>
 
                 <div className="flex flex-wrap gap-2 pt-1">
                   <span className="rounded-full border border-border bg-background/70 px-3 py-1 text-xs font-medium text-foreground/80">
+                    Projectile Motion Lab
+                  </span>
+                  <span className="rounded-full border border-border bg-background/70 px-3 py-1 text-xs font-medium text-foreground/80">
                     Simple Pendulum
                   </span>
                   <span className="rounded-full border border-border bg-background/70 px-3 py-1 text-xs font-medium text-foreground/80">
-                    Exact Elliptic AGM
+                    Aerodynamic Drag & Magnus Lift
                   </span>
                   <span className="rounded-full border border-border bg-background/70 px-3 py-1 text-xs font-medium text-foreground/80">
-                    Symplectic Integrators
+                    Symplectic Integrators (RK4)
                   </span>
                   <span className="rounded-full border border-border bg-background/70 px-3 py-1 text-xs font-medium text-foreground/80">
-                    5 Lab Experiments
+                    10 Guided Science Labs
                   </span>
                 </div>
               </div>
