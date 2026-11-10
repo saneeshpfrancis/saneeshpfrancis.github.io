@@ -64,6 +64,17 @@ export function Footer() {
                     Education
                   </a>
                 </li>
+                <li>
+                  <a
+                    href="#/simulations"
+                    className="inline-flex items-center gap-1.5 text-sm text-primary font-medium hover:underline"
+                  >
+                    <span>Science Simulations</span>
+                    <span className="rounded-full bg-primary/20 px-1.5 py-0.2 text-[10px] font-bold text-primary">
+                      Live
+                    </span>
+                  </a>
+                </li>
               </ul>
             </div>
             <div className="col-span-2 sm:col-span-1">

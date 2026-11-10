@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Download, Menu, Moon, Sun, X } from "lucide-react";
+import { Atom, Download, Menu, Moon, Sun, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { navLinks, profile } from "@/data/portfolio";
 import { useActiveSection } from "@/hooks/useActiveSection";
@@ -9,13 +9,25 @@ import { cn } from "@/utils/cn";
 type NavbarProps = {
   theme: Theme;
   onToggleTheme: () => void;
+  onNavigateToSimulations?: () => void;
 };
 
-export function Navbar({ theme, onToggleTheme }: NavbarProps) {
+export function Navbar({ theme, onToggleTheme, onNavigateToSimulations }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const sectionIds = useMemo(() => navLinks.map((l) => l.href.replace("#", "")), []);
   const active = useActiveSection(sectionIds);
+
+  const handleSimulationsClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setOpen(false);
+    if (onNavigateToSimulations) {
+      onNavigateToSimulations();
+    } else {
+      window.location.hash = "#/simulations";
+    }
+  };
+
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -88,6 +100,19 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
               </li>
             );
           })}
+          <li>
+            <a
+              href="#/simulations"
+              onClick={handleSimulationsClick}
+              className="ml-1 inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-all hover:bg-primary hover:text-primary-foreground shadow-xs"
+            >
+              <Atom className="h-3.5 w-3.5" />
+              <span>Simulations</span>
+              <span className="rounded-full bg-primary/20 px-1.5 py-0.2 text-[10px] font-bold text-primary group-hover:text-primary-foreground">
+                Live
+              </span>
+            </a>
+          </li>
         </ul>
 
         {/* Actions */}
@@ -172,6 +197,25 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
                   </motion.li>
                 );
               })}
+              <motion.li
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.35 }}
+              >
+                <a
+                  href="#/simulations"
+                  onClick={handleSimulationsClick}
+                  className="flex items-center justify-between rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 text-base font-semibold text-primary"
+                >
+                  <span className="flex items-center gap-2">
+                    <Atom className="h-4 w-4" />
+                    Science Simulations
+                  </span>
+                  <span className="rounded-full bg-primary/20 px-2 py-0.5 text-xs font-bold text-primary">
+                    Live
+                  </span>
+                </a>
+              </motion.li>
               <li className="pt-2">
                 <a
                   href={profile.cvUrl}

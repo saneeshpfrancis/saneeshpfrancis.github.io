@@ -1,11 +1,24 @@
 import { motion } from "framer-motion";
-import { ArrowUpRight, Calendar } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Atom, Calendar, FlaskConical } from "lucide-react";
 import { projects } from "@/data/portfolio";
 import { cn } from "@/utils/cn";
 import { staggerContainer, staggerItem } from "./ui/Reveal";
 import { SectionHeading } from "./ui/SectionHeading";
 
-export function Projects() {
+type ProjectsProps = {
+  onNavigateToSimulations?: () => void;
+};
+
+export function Projects({ onNavigateToSimulations }: ProjectsProps) {
+  const handleGoToSimulations = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (onNavigateToSimulations) {
+      onNavigateToSimulations();
+    } else {
+      window.location.hash = "#/simulations";
+    }
+  };
+
   return (
     <section id="projects" className="relative py-24 md:py-32">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
@@ -89,12 +102,26 @@ export function Projects() {
                       ))}
                     </div>
 
-                    {link && (
-                      <span className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-primary">
-                        {linkLabel ?? "View project"}
-                        <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                      </span>
-                    )}
+                    <div className="mt-6 flex flex-wrap items-center gap-4">
+                      {link && (
+                        <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary">
+                          {linkLabel ?? "View project"}
+                          <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                        </span>
+                      )}
+
+                      {featured && (
+                        <button
+                          type="button"
+                          onClick={handleGoToSimulations}
+                          className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-3.5 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+                        >
+                          <FlaskConical className="h-3.5 w-3.5" />
+                          <span>Explore Science Simulations</span>
+                          <ArrowRight className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {featured && (
@@ -106,6 +133,68 @@ export function Projects() {
               </motion.div>
             );
           })}
+        </motion.div>
+
+        {/* Dedicated Navigation Call-to-Action Banner */}
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-40px" }}
+          className="mt-12"
+        >
+          <motion.div
+            variants={staggerItem}
+            className="relative overflow-hidden rounded-3xl border border-primary/30 bg-gradient-to-br from-card via-card/95 to-primary/10 p-6 md:p-10 shadow-xl"
+          >
+            <div className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-gradient-to-br from-primary/20 via-accent/20 to-transparent blur-3xl opacity-75" />
+
+            <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+              <div className="max-w-2xl space-y-3">
+                <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary uppercase">
+                  <Atom className="h-3.5 w-3.5" />
+                  <span>Virtual Science Laboratory</span>
+                </div>
+
+                <h3 className="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl">
+                  Interactive Science Simulations
+                </h3>
+
+                <p className="text-sm leading-relaxed text-muted-foreground md:text-base">
+                  Explore degree-level computational physics simulations, large-amplitude nonlinear dynamics,
+                  symplectic integrator benchmarking (RK4, Velocity-Verlet, Euler-Cromer), phase space separatrices,
+                  and live FFT spectra.
+                </p>
+
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <span className="rounded-full border border-border bg-background/70 px-3 py-1 text-xs font-medium text-foreground/80">
+                    Simple Pendulum
+                  </span>
+                  <span className="rounded-full border border-border bg-background/70 px-3 py-1 text-xs font-medium text-foreground/80">
+                    Exact Elliptic AGM
+                  </span>
+                  <span className="rounded-full border border-border bg-background/70 px-3 py-1 text-xs font-medium text-foreground/80">
+                    Symplectic Integrators
+                  </span>
+                  <span className="rounded-full border border-border bg-background/70 px-3 py-1 text-xs font-medium text-foreground/80">
+                    5 Lab Experiments
+                  </span>
+                </div>
+              </div>
+
+              <div className="shrink-0">
+                <a
+                  href="#/simulations"
+                  onClick={handleGoToSimulations}
+                  className="group inline-flex cursor-pointer items-center gap-3 rounded-2xl bg-gradient-to-r from-primary to-accent px-6 py-4 text-sm font-bold text-white shadow-lg shadow-primary/25 transition-all hover:brightness-110 hover:shadow-xl hover:shadow-primary/30 active:scale-[0.98]"
+                >
+                  <FlaskConical className="h-4 w-4" />
+                  <span>View All Simulations</span>
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </a>
+              </div>
+            </div>
+          </motion.div>
         </motion.div>
       </div>
     </section>
