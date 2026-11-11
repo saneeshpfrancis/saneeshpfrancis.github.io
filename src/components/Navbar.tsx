@@ -30,10 +30,19 @@ export function Navbar({ theme, onToggleTheme, onNavigateToSimulations }: Navbar
 
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
+    const getScrollTop = () =>
+      window.scrollY ||
+      document.documentElement.scrollTop ||
+      document.body.scrollTop ||
+      0;
+    const onScroll = () => setScrolled(getScrollTop() > 20);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    document.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      document.removeEventListener("scroll", onScroll);
+    };
   }, []);
 
   // Close the mobile menu on resize to desktop
@@ -56,20 +65,20 @@ export function Navbar({ theme, onToggleTheme, onNavigateToSimulations }: Navbar
   return (
     <header
       className={cn(
-        "fixed inset-x-0 top-0 z-50 transition-all duration-300",
+        "fixed inset-x-0 top-0 z-50 w-full max-w-full transition-all duration-300",
         scrolled || open
-          ? "border-b border-border/70 bg-background/75 shadow-sm shadow-black/5 backdrop-blur-xl"
+          ? "border-b border-border/70 bg-background/85 shadow-sm shadow-black/5 backdrop-blur-xl"
           : "bg-transparent",
       )}
     >
-      <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-8 md:h-[72px]">
+      <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-8 md:h-[72px]">
         {/* Brand */}
-        <a href="#home" className="group flex items-center gap-3" aria-label="Go to top">
-          <span className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-primary to-accent font-display text-sm font-bold text-primary-foreground shadow-md shadow-primary/25">
+        <a href="#home" className="group flex items-center gap-2.5 sm:gap-3" aria-label="Go to top">
+          <span className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-primary to-accent font-display text-sm font-bold text-primary-foreground shadow-md shadow-primary/25">
             {profile.initials}
             <span className="absolute inset-0 bg-white/20 opacity-0 transition-opacity group-hover:opacity-100" />
           </span>
-          <span className="hidden font-display text-base font-semibold tracking-tight sm:block">
+          <span className="font-display text-sm font-semibold tracking-tight text-foreground sm:text-base">
             {profile.name}
           </span>
         </a>
@@ -152,7 +161,7 @@ export function Navbar({ theme, onToggleTheme, onNavigateToSimulations }: Navbar
             onClick={() => setOpen((o) => !o)}
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card/60 text-foreground lg:hidden"
+            className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-border bg-card/70 text-foreground transition-all hover:border-primary/50 hover:text-primary active:scale-95 lg:hidden"
           >
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -168,9 +177,9 @@ export function Navbar({ theme, onToggleTheme, onNavigateToSimulations }: Navbar
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="overflow-hidden border-t border-border/70 bg-background/95 backdrop-blur-xl lg:hidden"
+            className="max-h-[calc(100dvh-4.5rem)] overflow-y-auto overscroll-contain border-t border-border/70 bg-background/95 backdrop-blur-xl lg:hidden"
           >
-            <ul className="mx-auto flex max-w-7xl flex-col gap-1 px-5 py-4 sm:px-8">
+            <ul className="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-4 sm:px-8">
               {navLinks.map((link, i) => {
                 const id = link.href.replace("#", "");
                 const isActive = active === id;

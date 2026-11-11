@@ -60,7 +60,7 @@ export function Hero() {
 
             <motion.h1
               variants={item}
-              className="font-display text-5xl leading-[1.05] font-bold tracking-tight text-foreground sm:text-6xl md:text-7xl"
+              className="font-display text-4xl leading-[1.1] font-bold tracking-tight text-foreground sm:text-6xl md:text-7xl"
             >
               Hi, I&apos;m <span className="text-gradient">{profile.name}</span>
             </motion.h1>
@@ -145,19 +145,19 @@ export function Hero() {
 
               {/* Floating badges */}
               <FloatingBadge
-                className="top-[10%] -left-2 animate-float sm:left-0"
+                className="top-[10%] left-0 sm:-left-2 animate-float"
                 icon={<Atom className="h-4 w-4" />}
                 title="Physics Simulations"
                 subtitle="Interactive & animated"
               />
               <FloatingBadge
-                className="top-[48%] -right-2 animate-float-slow sm:right-0"
+                className="top-[48%] right-0 sm:-right-2 animate-float-slow"
                 icon={<Radio className="h-4 w-4" />}
                 title="Hands-On STEM Training"
                 subtitle="Practical skills for teachers & students"
               />
               <FloatingBadge
-                className="bottom-[8%] left-[6%] animate-float [animation-delay:2.4s]"
+                className="bottom-[8%] left-[4%] sm:left-[6%] animate-float [animation-delay:2.4s]"
                 icon={<BookOpen className="h-4 w-4" />}
                 title={`${publications.length} Publications`}
                 subtitle="IEEE · Springer · Elsevier"
@@ -171,17 +171,17 @@ export function Hero() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          className="glass mt-16 grid grid-cols-2 divide-border/70 rounded-2xl shadow-xl shadow-black/5 md:mt-24 md:grid-cols-4 md:divide-x"
+          className="glass mt-16 grid grid-cols-2 divide-y md:divide-y-0 divide-border/70 rounded-2xl shadow-xl shadow-black/5 md:mt-24 md:grid-cols-4 md:divide-x"
         >
           {stats.map((s) => (
             <div
               key={s.label}
-              className="flex flex-col items-center px-6 py-6 text-center md:py-7"
+              className="flex flex-col items-center px-4 py-5 text-center sm:px-6 sm:py-6 md:py-7"
             >
-              <span className="font-display text-3xl font-bold text-gradient md:text-4xl">
+              <span className="font-display text-2xl font-bold text-gradient sm:text-3xl md:text-4xl">
                 {s.value}
               </span>
-              <span className="mt-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+              <span className="mt-1.5 text-[11px] font-medium tracking-wide text-muted-foreground uppercase sm:text-xs">
                 {s.label}
               </span>
             </div>
@@ -216,14 +216,14 @@ function FloatingBadge({
 }) {
   return (
     <div
-      className={`glass absolute z-10 flex items-center gap-3 rounded-2xl px-3.5 py-2.5 shadow-lg shadow-black/10 ${className ?? ""}`}
+      className={`glass absolute z-10 flex max-w-[calc(100%-1rem)] items-center gap-2.5 sm:gap-3 rounded-2xl px-3 py-2 sm:px-3.5 sm:py-2.5 shadow-lg shadow-black/10 ${className ?? ""}`}
     >
-      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15 text-primary">
+      <span className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
         {icon}
       </span>
-      <span className="flex flex-col">
-        <span className="text-sm font-semibold text-foreground">{title}</span>
-        <span className="text-[11px] text-muted-foreground">{subtitle}</span>
+      <span className="flex flex-col min-w-0">
+        <span className="text-xs sm:text-sm font-semibold text-foreground truncate">{title}</span>
+        <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate">{subtitle}</span>
       </span>
     </div>
   );

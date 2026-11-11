@@ -80,7 +80,7 @@ export default function App() {
   }
 
   return (
-    <div className="relative min-h-screen bg-background text-foreground">
+    <div className="relative min-h-screen w-full max-w-full overflow-x-clip bg-background text-foreground">
       <ScrollProgress />
       <Navbar
         theme={theme}

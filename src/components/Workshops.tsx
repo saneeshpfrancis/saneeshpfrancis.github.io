@@ -12,7 +12,7 @@ const flags: Record<string, string> = {
 
 export function Workshops() {
   return (
-    <section id="outreach" className="relative py-24 md:py-32">
+    <section id="outreach" className="relative overflow-hidden py-24 md:py-32">
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="bg-grid absolute inset-0 [mask-image:radial-gradient(ellipse_at_center,black_20%,transparent_70%)]" />
         <div className="glow-primary absolute -right-40 bottom-0 h-[480px] w-[480px] rounded-full blur-3xl" />

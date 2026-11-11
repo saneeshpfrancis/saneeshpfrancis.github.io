@@ -25,7 +25,7 @@ export function Contact() {
   };
 
   return (
-    <section id="contact" className="relative py-24 md:py-32">
+    <section id="contact" className="relative overflow-hidden py-24 md:py-32">
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="glow-primary absolute -bottom-40 left-1/2 h-[600px] w-[900px] -translate-x-1/2 rounded-full blur-3xl" />
       </div>

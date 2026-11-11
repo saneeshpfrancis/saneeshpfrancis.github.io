@@ -27,7 +27,7 @@ export function About() {
   ];
 
   return (
-    <section id="about" className="relative py-24 md:py-32">
+    <section id="about" className="relative overflow-hidden py-24 md:py-32">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <SectionHeading
           eyebrow="About me"

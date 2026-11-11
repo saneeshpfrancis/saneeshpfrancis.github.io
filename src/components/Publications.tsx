@@ -27,7 +27,7 @@ export function Publications() {
   const conferences = publications.length - journals;
 
   return (
-    <section id="publications" className="relative py-24 md:py-32">
+    <section id="publications" className="relative overflow-hidden py-24 md:py-32">
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="glow-accent absolute top-1/2 -left-40 h-[520px] w-[520px] -translate-y-1/2 rounded-full blur-3xl" />
       </div>

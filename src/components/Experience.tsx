@@ -5,7 +5,7 @@ import { SectionHeading } from "./ui/SectionHeading";
 
 export function Experience() {
   return (
-    <section id="experience" className="relative py-24 md:py-32">
+    <section id="experience" className="relative overflow-hidden py-24 md:py-32">
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="glow-accent absolute top-1/4 -left-40 h-[480px] w-[480px] rounded-full blur-3xl" />
       </div>
